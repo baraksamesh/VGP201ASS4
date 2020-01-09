@@ -33,6 +33,7 @@
 
 
 
+
 namespace igl
 {
 	namespace opengl
@@ -127,12 +128,12 @@ namespace igl
 				void move();
 				void make_tree(Eigen::MatrixXd V, Eigen::MatrixXi F, int idx);
 				void make_trees();
-				void add_box(igl::AABB<Eigen::MatrixXd, 3> tree, int idx, Eigen::RowVector3d color);
+				void initBoxes();
+				void add_box(igl::AABB<Eigen::MatrixXd, 3>& tree, int idx, Eigen::RowVector3d color, bool deleteOld = false);
 				void remove_box(int idx);
 				bool are_trees_touching(igl::AABB<Eigen::MatrixXd, 3>& tree1, igl::AABB<Eigen::MatrixXd, 3>& tree2, int idx1, int idx2);
 				bool collision_detection(int idx1, int idx2);
-				bool collision_detection(igl::AABB<Eigen::MatrixXd, 3> tree1, igl::AABB<Eigen::MatrixXd, 3> tree2, int idx1, int idx2);
-				
+				bool collision_detection(igl::AABB<Eigen::MatrixXd, 3>& tree1, igl::AABB<Eigen::MatrixXd, 3>& tree2, int idx1, int idx2);
 
 
 			public:

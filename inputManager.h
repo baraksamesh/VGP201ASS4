@@ -180,49 +180,53 @@ static void glfw_key_callback(GLFWwindow* window, int key, int scancode, int act
 			/*scn->iking = !scn->iking;
 			if (!scn->iking)
 				scn->fin_rotate();*/
-			
+
 			if (scn->speed == 0) {
-				scn->speed = -0.01;
-				scn->remove_box(0);
-				scn->remove_box(1);
+				scn->speed = 0.02;
+				scn->initBoxes();
 			}
 			else
 				scn->speed = 0;
 			break;
 		case GLFW_KEY_UP:
 		{
-			if (scn->selected_data_index != -1)
+			/*if (scn->selected_data_index != -1)
 				scn->data().MyRotate(Eigen::Vector3f(1, 0, 0), 0.1, true);
 			else
-				scn->MyRotate(Eigen::Vector3f(1, 0, 0), 0.1);
-			//scn->data().MyRotate(Eigen::Vector3f(1,0,0),0.1,scn);  
+				scn->MyRotate(Eigen::Vector3f(1, 0, 0), 0.1);*/
+				//scn->data().MyRotate(Eigen::Vector3f(1,0,0),0.1,scn);  
+			scn->dir = Eigen::Vector3f(0, 1, 0);
+
 			break;
 		}
 		case GLFW_KEY_DOWN:
 		{
-			if (scn->selected_data_index != -1)
+			/*if (scn->selected_data_index != -1)
 				scn->data().MyRotate(Eigen::Vector3f(1, 0, 0), -0.1, true);
 			else
-				scn->MyRotate(Eigen::Vector3f(1, 0, 0), -0.1);
-			//scn->data().MyRotate(Eigen::Vector3f(1, 0, 0), -0.1,scn);
+				scn->MyRotate(Eigen::Vector3f(1, 0, 0), -0.1);*/
+				//scn->data().MyRotate(Eigen::Vector3f(1, 0, 0), -0.1,scn);
+			scn->dir = Eigen::Vector3f(0, -1, 0);
 			break;
 		}
 		case GLFW_KEY_LEFT:
 		{
-			if (scn->selected_data_index != -1)
+			/*if (scn->selected_data_index != -1)
 				scn->data().MyRotate(Eigen::Vector3f(0, 1, 0), -0.1, false);
 			else
-				scn->MyRotate(Eigen::Vector3f(0, 1, 0), -0.1);
-			//scn->data().MyRotate(Eigen::Vector3f(0, 1, 0), -0.1,scn);
+				scn->MyRotate(Eigen::Vector3f(0, 1, 0), -0.1);*/
+				//scn->data().MyRotate(Eigen::Vector3f(0, 1, 0), -0.1,scn);
+			scn->dir = Eigen::Vector3f(-1, 0, 0);
 			break;
 		}
 		case GLFW_KEY_RIGHT:
 		{
-			if (scn->selected_data_index != -1)
+			/*if (scn->selected_data_index != -1)
 				scn->data().MyRotate(Eigen::Vector3f(0, 1, 0), 0.1, false);
 			else
-				scn->MyRotate(Eigen::Vector3f(0, 1, 0), 0.1);
-			//scn->data().MyRotate(Eigen::Vector3f(0, 1, 0), 0.1,scn);
+				scn->MyRotate(Eigen::Vector3f(0, 1, 0), 0.1);*/
+				//scn->data().MyRotate(Eigen::Vector3f(0, 1, 0), 0.1,scn);
+			scn->dir = Eigen::Vector3f(1, 0, 0);
 			break;
 		}
 		case 'T':

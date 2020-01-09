@@ -249,22 +249,31 @@ void BetterViewer::calc_cost_and_position(
 void BetterViewer::load_collision()
 {
 	speed = 0;
-	dir = Eigen::Vector3f(1, 0, 0);
+	dir = Eigen::Vector3f(-1, 0, 0);
+	bool simplify = false;
 
-	//MyTranslate(Eigen::Vector3f(0, 0, -1));
+	MyTranslate(Eigen::Vector3f(0, 0, -0.4));
 	load_mesh_from_file("C:/VGP201/EngineForAnimationCourse/tutorial/data/bunny.off");
-	data().MyTranslate(Eigen::Vector3f(0.2, 0, 0));
+	data().MyTranslate(Eigen::Vector3f(0.4, 0, 0));
 	load_mesh_from_file("C:/VGP201/EngineForAnimationCourse/tutorial/data/bunny.off");
 	//data().MyTranslate(Eigen::Vector3f(-0.2	, 0, 0));
 
-	initData();
+	
 	trees.resize(data_list.size());
-	for (int i = 0; i < data_list.size(); i++) {
-		std::cout << "simplifying " << i << std::endl;
-		Eigen::MatrixXd V = data(i).V;
-		Eigen::MatrixXi F = data(i).F;
-		//simplify_V_F(V, F, i, 0.2f);
-		make_tree(V, F, i);
+
+	if (simplify) {
+		initData();
+		for (int i = 0; i < data_list.size(); i++) {
+			std::cout << "simplifying " << i << std::endl;
+			Eigen::MatrixXd V = data(i).V;
+			Eigen::MatrixXi F = data(i).F;
+			simplify_V_F(V, F, i, 0.2f);
+			make_tree(V, F, i);
+		}
+	}
+	else {
+		for (int i = 0; i < data_list.size(); i++)
+			make_tree(data(i).V, data(i).F, i);
 	}
 }
 

@@ -4,6 +4,7 @@
 #include <igl/unproject_onto_mesh.h>
 #include "igl/look_at.h"
 #include <Eigen/Dense>
+
 Renderer::Renderer() : selected_core_index(0),
 next_core_id(2)
 {

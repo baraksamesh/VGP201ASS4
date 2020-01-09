@@ -9,7 +9,6 @@
 #include "igl/igl_inline.h"
 #include <igl/get_seconds.h>
 
-
 static void glfw_error_callback(int error, const char* description)
 {
 	fputs(description, stderr);
@@ -126,7 +125,7 @@ bool Display::launch_rendering(bool loop)
 		glfwSwapBuffers(window);
 		if (renderer->GetScene()->iking)
 			renderer->GetScene()->ik();
-		if(renderer->GetScene()->speed != 0 && renderer->GetScene()->collision_detection(0, 1))
+		if (renderer->GetScene()->speed != 0 && renderer->GetScene()->collision_detection(0, 1))
 			renderer->GetScene()->speed = 0;
 		renderer->GetScene()->move();
 		if (renderer->core().is_animating || frame_counter++ < num_extra_frames)
@@ -206,4 +205,5 @@ Display::~Display()
 	glfwDestroyWindow(window);
 	glfwTerminate();
 }
+
 

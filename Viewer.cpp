@@ -49,6 +49,7 @@ static double scroll_x = 0;
 static double scroll_y = 0;
 
 
+
 namespace igl
 {
 	namespace opengl
@@ -617,19 +618,19 @@ namespace igl
 			///////////////////////////////////////////////////////////////////////////////////////////////////////
 			/// COLLISION ////////////////////////////////////////////////////////////////////////////////////////////////
 			///////////////////////////////////////////////////////////////////////////////////////////////////////
-			
+
 			void Viewer::move() {
 				data(0).MyTranslate(dir * speed);
 			}
-			
+
 			void Viewer::make_tree(Eigen::MatrixXd V, Eigen::MatrixXi F, int idx) {
-				
+
 				igl::AABB<Eigen::MatrixXd, 3> tree;
 				tree.init(V, F);
 				trees[idx] = tree;
 				add_box(tree, idx, Eigen::RowVector3d(0, 1, 0));
 			}
-			
+
 			void Viewer::make_trees() {
 				trees.resize(data_list.size());
 				for (int i = 0; i < data_list.size(); i++) {
@@ -640,7 +641,13 @@ namespace igl
 				}
 			}
 
-			void Viewer::add_box(igl::AABB<Eigen::MatrixXd, 3> tree, int idx, Eigen::RowVector3d color) {
+			void Viewer::initBoxes() {
+				for (int i = 0; i < data_list.size(); i++) {
+					add_box(trees[i], i, Eigen::RowVector3d(0, 1, 0), true);
+				}
+			}
+
+			void Viewer::add_box(igl::AABB<Eigen::MatrixXd, 3>& tree, int idx, Eigen::RowVector3d color, bool deleteOld) {
 
 				Eigen::RowVector3d blc = tree.m_box.corner(tree.m_box.BottomLeftCeil);
 				Eigen::RowVector3d brc = tree.m_box.corner(tree.m_box.BottomRightCeil);
@@ -650,21 +657,46 @@ namespace igl
 				Eigen::RowVector3d trc = tree.m_box.corner(tree.m_box.TopRightCeil);
 				Eigen::RowVector3d tlf = tree.m_box.corner(tree.m_box.TopLeftFloor);
 				Eigen::RowVector3d trf = tree.m_box.corner(tree.m_box.TopRightFloor);
-				data(idx).add_edges(blc, brc, color);
-				data(idx).add_edges(blc, blf, color);
-				data(idx).add_edges(brc, brf, color);
-				data(idx).add_edges(blf, brf, color);
-				data(idx).add_edges(tlc, trc, color);
-				data(idx).add_edges(tlc, tlf, color);
-				data(idx).add_edges(trc, trf, color);
-				data(idx).add_edges(tlf, trf, color);
-				data(idx).add_edges(blc, tlc, color);
-				data(idx).add_edges(brf, trf, color);
-				data(idx).add_edges(brc, trc, color);
-				data(idx).add_edges(blf, tlf, color);
+
+				Eigen::MatrixXd dots(8, 3);
+				dots << blc, brc, blf, brf, tlc, trc, tlf, trf;
+
+				Eigen::MatrixXi edges(12, 2);
+				edges << 0, 1,
+					0, 2,
+					1, 3,
+					2, 3,
+					4, 5,
+					4, 6,
+					5, 7,
+					6, 7,
+					0, 4,
+					3, 7,
+					1, 5,
+					2, 6;
+
+				if (deleteOld)
+					data(idx).set_edges(dots, edges, color);
+				else {
+					data(idx).add_edges(blc, brc, color);
+					data(idx).add_edges(blc, blf, color);
+					data(idx).add_edges(brc, brf, color);
+					data(idx).add_edges(blf, brf, color);
+					data(idx).add_edges(tlc, trc, color);
+					data(idx).add_edges(tlc, tlf, color);
+					data(idx).add_edges(trc, trf, color);
+					data(idx).add_edges(tlf, trf, color);
+					data(idx).add_edges(blc, tlc, color);
+					data(idx).add_edges(brf, trf, color);
+					data(idx).add_edges(brc, trc, color);
+					data(idx).add_edges(blf, tlf, color);
+				}
+
+
 				data(idx).line_width = 2;
 				data(idx).show_lines = false;
 				data(idx).show_overlay_depth = false;
+
 			}
 
 			void Viewer::remove_box(int idx) {
@@ -680,20 +712,20 @@ namespace igl
 			}
 
 
-			bool Viewer::are_trees_touching(igl::AABB<Eigen::MatrixXd, 3> &tree1, igl::AABB<Eigen::MatrixXd, 3>& tree2, int idx1, int idx2) {
-				
-				float a0 = tree1.m_box.sizes()[0]/2;//(tree1.m_box.corner(tree1.m_box.BottomLeftFloor) - tree1.m_box.corner(tree1.m_box.BottomRightFloor)).norm() / 2;
-				float a1 = tree1.m_box.sizes()[1]/2;//(tree1.m_box.corner(tree1.m_box.BottomLeftFloor) - tree1.m_box.corner(tree1.m_box.TopLeftFloor)).norm() / 2;
-				float a2 = tree1.m_box.sizes()[2]/2;//(tree1.m_box.corner(tree1.m_box.BottomLeftFloor) - tree1.m_box.corner(tree1.m_box.BottomLeftCeil)).norm() / 2;
-												 
-				float b0 = tree2.m_box.sizes()[0]/2;//(tree2.m_box.corner(tree2.m_box.BottomLeftFloor) - tree2.m_box.corner(tree2.m_box.BottomRightFloor)).norm() / 2;
-				float b1 = tree2.m_box.sizes()[1]/2;//(tree2.m_box.corner(tree2.m_box.BottomLeftFloor) - tree2.m_box.corner(tree2.m_box.TopLeftFloor)).norm() / 2;
-				float b2 = tree2.m_box.sizes()[2]/2;//(tree2.m_box.corner(tree2.m_box.BottomLeftFloor) - tree2.m_box.corner(tree2.m_box.BottomLeftCeil)).norm() / 2;
-				
+			bool Viewer::are_trees_touching(igl::AABB<Eigen::MatrixXd, 3>& tree1, igl::AABB<Eigen::MatrixXd, 3>& tree2, int idx1, int idx2) {
+
+				float a0 = tree1.m_box.sizes()[0] / 2;//(tree1.m_box.corner(tree1.m_box.BottomLeftFloor) - tree1.m_box.corner(tree1.m_box.BottomRightFloor)).norm() / 2;
+				float a1 = tree1.m_box.sizes()[1] / 2;//(tree1.m_box.corner(tree1.m_box.BottomLeftFloor) - tree1.m_box.corner(tree1.m_box.TopLeftFloor)).norm() / 2;
+				float a2 = tree1.m_box.sizes()[2] / 2;//(tree1.m_box.corner(tree1.m_box.BottomLeftFloor) - tree1.m_box.corner(tree1.m_box.BottomLeftCeil)).norm() / 2;
+
+				float b0 = tree2.m_box.sizes()[0] / 2;//(tree2.m_box.corner(tree2.m_box.BottomLeftFloor) - tree2.m_box.corner(tree2.m_box.BottomRightFloor)).norm() / 2;
+				float b1 = tree2.m_box.sizes()[1] / 2;//(tree2.m_box.corner(tree2.m_box.BottomLeftFloor) - tree2.m_box.corner(tree2.m_box.TopLeftFloor)).norm() / 2;
+				float b2 = tree2.m_box.sizes()[2] / 2;//(tree2.m_box.corner(tree2.m_box.BottomLeftFloor) - tree2.m_box.corner(tree2.m_box.BottomLeftCeil)).norm() / 2;
+
 				//Eigen::Matrix3d A = data(idx1).GetRotation().cast<double>() * Eigen::Matrix3d::Identity();
-				Eigen::RowVector3d A0 = data(idx1).GetRotation().cast<double>() * Eigen::Vector3d(1,0,0); //A.col(1);
-				Eigen::RowVector3d A1 = data(idx1).GetRotation().cast<double>() * Eigen::Vector3d(0,1,0); //A.col(2);
-				Eigen::RowVector3d A2 = data(idx1).GetRotation().cast<double>() * Eigen::Vector3d(0,0,1); //A.col(0);
+				Eigen::RowVector3d A0 = data(idx1).GetRotation().cast<double>() * Eigen::Vector3d(1, 0, 0); //A.col(1);
+				Eigen::RowVector3d A1 = data(idx1).GetRotation().cast<double>() * Eigen::Vector3d(0, 1, 0); //A.col(2);
+				Eigen::RowVector3d A2 = data(idx1).GetRotation().cast<double>() * Eigen::Vector3d(0, 0, 1); //A.col(0);
 				Eigen::Matrix3d A;
 				A << A0[0], A1[0], A2[0],
 					A0[1], A1[1], A2[1],
@@ -705,16 +737,16 @@ namespace igl
 				Eigen::Vector3d B2 = data(idx2).GetRotation().cast<double>() * Eigen::Vector3d(0, 0, 1); //B.col(0);
 				Eigen::Matrix3d B;
 				B << B0[0], B1[0], B2[0],
-					 B0[1], B1[1], B2[1],
-					 B0[2], B1[2], B2[2];
+					B0[1], B1[1], B2[1],
+					B0[2], B1[2], B2[2];
 
 				Eigen::Vector4d c1 = Eigen::Vector4d(tree1.m_box.center()[0], tree1.m_box.center()[1], tree1.m_box.center()[2], 1);
 				Eigen::Vector4d c2 = Eigen::Vector4d(tree2.m_box.center()[0], tree2.m_box.center()[1], tree2.m_box.center()[2], 1);
 
 				Eigen::Matrix3d C = A.transpose() * B;
-				Eigen::Vector4d D4 = data(idx2).MakeTrans().cast<double>() * c2 - data(idx1).MakeTrans().cast<double>()* c1;
+				Eigen::Vector4d D4 = data(idx2).MakeTrans().cast<double>() * c2 - data(idx1).MakeTrans().cast<double>() * c1;
 				Eigen::Vector3d D = D4.head(3);
-				
+
 				//A0
 				double R0 = a0;
 				double R1 = b0 * abs(C.row(0)[0]) + b1 * abs(C.row(0)[1]) + b2 * abs(C.row(0)[2]);
@@ -813,14 +845,46 @@ namespace igl
 				igl::AABB<Eigen::MatrixXd, 3> tree1 = trees[idx1];
 				igl::AABB<Eigen::MatrixXd, 3> tree2 = trees[idx2];
 
-				bool touching = collision_detection(tree1, tree2, idx1, idx2);
+				bool touching = collision_detection(tree1, tree2, idx1, idx2);//are_trees_touching(tree1, tree2, idx1, idx2);
+				/*while (touching && !tree1.is_leaf() && !tree2.is_leaf()) {
+					touching = are_trees_touching(*tree1.m_left, *tree2.m_left, idx1, idx2);
+					if (touching) {
+						tree1 = *tree1.m_left;
+						tree2 = *tree2.m_left;
+					}
+					else {
+						touching = are_trees_touching(*tree1.m_left, *tree2.m_right, idx1, idx2);
+						if (touching) {
+							tree1 = *tree1.m_left;
+							tree2 = *tree2.m_right;
+						}
+						else {
+							touching = are_trees_touching(*tree1.m_right, *tree2.m_left, idx1, idx2);
+							if (touching) {
+								tree1 = *tree1.m_right;
+								tree2 = *tree2.m_left;
+							}
+							else {
+								touching = are_trees_touching(*tree1.m_right, *tree2.m_right, idx1, idx2);
+								if (touching) {
+									tree1 = *tree1.m_right;
+									tree2 = *tree2.m_right;
+								}
+							}
+						}
+					}
+					if (touching) {
+						add_box(tree1, 0);
+						add_box(tree2, 1);
+					}
+				}*/
 				return touching;
 			}
 
-			bool Viewer::collision_detection(igl::AABB<Eigen::MatrixXd, 3> tree1, igl::AABB<Eigen::MatrixXd, 3> tree2, int idx1, int idx2) {
-				
+			bool Viewer::collision_detection(igl::AABB<Eigen::MatrixXd, 3> &tree1, igl::AABB<Eigen::MatrixXd, 3> &tree2, int idx1, int idx2) {
+
 				bool touching = false;
-				
+
 				if (tree1.is_leaf() && tree2.is_leaf()) {
 					add_box(tree1, 0, Eigen::RowVector3d(1, 1, 1));
 					add_box(tree2, 1, Eigen::RowVector3d(1, 1, 1));
@@ -876,7 +940,7 @@ namespace igl
 				}
 				return false;
 			}
-			
+
 		} // end namespace
 	} // end namespace
 }

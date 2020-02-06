@@ -702,109 +702,110 @@ namespace igl
 				float b1 = box2.sizes()[1] / 2;
 				float b2 = box2.sizes()[2] / 2;
 
-				Eigen::RowVector3d A0 = A->col(0);
-				Eigen::RowVector3d A1 = A->col(1);
-				Eigen::RowVector3d A2 = A->col(2);
+				//Eigen::RowVector3d A0 = A->col(0);
+				//Eigen::RowVector3d A1 = A->col(1);
+				//Eigen::RowVector3d A2 = A->col(2);
 
-				Eigen::Vector3d B0 = B->col(0);
-				Eigen::Vector3d B1 = B->col(1);
-				Eigen::Vector3d B2 = B->col(2);
+				//Eigen::Vector3d B0 = B->col(0);
+				//Eigen::Vector3d B1 = B->col(1);
+				//Eigen::Vector3d B2 = B->col(2);
 
-				Eigen::Vector4d c1 = Eigen::Vector4d(box1.center()[0], box1.center()[1], box1.center()[2], 1);
-				Eigen::Vector4d c2 = Eigen::Vector4d(box2.center()[0], box2.center()[1], box2.center()[2], 1);
+				//Eigen::Vector4d c1 = Eigen::Vector4d(box1.center()[0], box1.center()[1], box1.center()[2], 1);
+				//Eigen::Vector4d c2 = Eigen::Vector4d(box2.center()[0], box2.center()[1], box2.center()[2], 1);
 
-				Eigen::Vector4d D4 = data(idx2).MakeTrans().cast<double>() * c2 - data(idx1).MakeTrans().cast<double>() * c1;
-				Eigen::Vector3d D = D4.head(3);
+				Eigen::Vector3d D = ( data(idx2).MakeTrans().cast<double>() * Eigen::Vector4d(box2.center()[0], box2.center()[1], box2.center()[2], 1)
+					- data(idx1).MakeTrans().cast<double>() * Eigen::Vector4d(box1.center()[0], box1.center()[1], box1.center()[2], 1) ).head(3);
+				//Eigen::Vector3d D = D4.head(3);
 
 
 				//A0
 				double R0 = a0;
 				double R1 = b0 * abs(C->row(0)[0]) + b1 * abs(C->row(0)[1]) + b2 * abs(C->row(0)[2]);
-				double R = abs(A0.dot(D));
+				double R = abs(A->col(0).dot(D));
 				if (R > R0 + R1)
 					return false;
 				//A1
 				R0 = a1;
 				R1 = b0 * abs(C->row(1)[0]) + b1 * abs(C->row(1)[1]) + b2 * abs(C->row(1)[2]);
-				R = abs(A1.dot(D));
+				R = abs(A->col(1).dot(D));
 				if (R > R0 + R1)
 					return false;
 				//A2
 				R0 = a2;
 				R1 = b0 * abs(C->row(2)[0]) + b1 * abs(C->row(2)[1]) + b2 * abs(C->row(2)[2]);
-				R = abs(A2.dot(D));
+				R = abs(A->col(2).dot(D));
 				if (R > R0 + R1)
 					return false;
 				//B0
 				R0 = a0 * abs(C->row(0)[0]) + a1 * abs(C->row(1)[0]) + a2 * abs(C->row(2)[0]);
 				R1 = b0;
-				R = abs(B0.dot(D));
+				R = abs(B->col(0).dot(D));
 				if (R > R0 + R1)
 					return false;
 				//B1
 				R0 = a0 * abs(C->row(0)[1]) + a1 * abs(C->row(1)[1]) + a2 * abs(C->row(2)[1]);
 				R1 = b1;
-				R = abs(B1.dot(D));
+				R = abs(B->col(1).dot(D));
 				if (R > R0 + R1)
 					return false;
 				//B2
 				R0 = a0 * abs(C->row(0)[2]) + a1 * abs(C->row(1)[2]) + a2 * abs(C->row(2)[2]);
 				R1 = b2;
-				R = abs(B2.dot(D));
+				R = abs(B->col(2).dot(D));
 				if (R > R0 + R1)
 					return false;
 				//A0 X B0
 				R0 = a1 * abs(C->row(2)[0]) + a2 * abs(C->row(1)[0]);
 				R1 = b1 * abs(C->row(0)[2]) + b2 * abs(C->row(0)[1]);
-				R = abs(C->row(1)[0] * A2.dot(D) - C->row(2)[0] * A1.dot(D));
+				R = abs(C->row(1)[0] * A->col(2).dot(D) - C->row(2)[0] * A->col(1).dot(D));
 				if (R > R0 + R1)
 					return false;
 				//A0 X B1
 				R0 = a1 * abs(C->row(2)[1]) + a2 * abs(C->row(1)[1]);
 				R1 = b0 * abs(C->row(0)[2]) + b2 * abs(C->row(0)[0]);
-				R = abs(C->row(1)[1] * A2.dot(D) - C->row(2)[1] * A1.dot(D));
+				R = abs(C->row(1)[1] * A->col(2).dot(D) - C->row(2)[1] * A->col(1).dot(D));
 				if (R > R0 + R1)
 					return false;
 				//A0 X B2
 				R0 = a1 * abs(C->row(2)[2]) + a2 * abs(C->row(1)[2]);
 				R1 = b0 * abs(C->row(0)[1]) + b1 * abs(C->row(0)[0]);
-				R = abs(C->row(1)[2] * A2.dot(D) - C->row(2)[2] * A1.dot(D));
+				R = abs(C->row(1)[2] * A->col(2).dot(D) - C->row(2)[2] * A->col(1).dot(D));
 				if (R > R0 + R1)
 					return false;
 				//A1 X B0
 				R0 = a0 * abs(C->row(2)[0]) + a2 * abs(C->row(0)[0]);
 				R1 = b1 * abs(C->row(1)[2]) + b2 * abs(C->row(1)[1]);
-				R = abs(C->row(2)[0] * A0.dot(D) - C->row(0)[0] * A2.dot(D));
+				R = abs(C->row(2)[0] * A->col(0).dot(D) - C->row(0)[0] * A->col(2).dot(D));
 				if (R > R0 + R1)
 					return false;
 				//A1 X B1
 				R0 = a0 * abs(C->row(2)[1]) + a2 * abs(C->row(0)[1]);
 				R1 = b0 * abs(C->row(1)[2]) + b2 * abs(C->row(1)[0]);
-				R = abs(C->row(2)[1] * A0.dot(D) - C->row(0)[1] * A2.dot(D));
+				R = abs(C->row(2)[1] * A->col(0).dot(D) - C->row(0)[1] * A->col(2).dot(D));
 				if (R > R0 + R1)
 					return false;
 				//A1 X B2
 				R0 = a0 * abs(C->row(2)[2]) + a2 * abs(C->row(0)[2]);
 				R1 = b0 * abs(C->row(1)[1]) + b1 * abs(C->row(1)[0]);
-				R = abs(C->row(2)[2] * A0.dot(D) - C->row(0)[2] * A2.dot(D));
+				R = abs(C->row(2)[2] * A->col(0).dot(D) - C->row(0)[2] * A->col(2).dot(D));
 				if (R > R0 + R1)
 					return false;
 				//A2 X B0
 				R0 = a0 * abs(C->row(1)[0]) + a1 * abs(C->row(0)[0]);
 				R1 = b1 * abs(C->row(2)[2]) + b2 * abs(C->row(2)[1]);
-				R = abs(C->row(0)[0] * A1.dot(D) - C->row(1)[0] * A0.dot(D));
+				R = abs(C->row(0)[0] * A->col(1).dot(D) - C->row(1)[0] * A->col(0).dot(D));
 				if (R > R0 + R1)
 					return false;
 				//A2 X B1
 				R0 = a0 * abs(C->row(1)[1]) + a1 * abs(C->row(0)[1]);
 				R1 = b0 * abs(C->row(2)[2]) + b2 * abs(C->row(2)[0]);
-				R = abs(C->row(0)[1] * A1.dot(D) - C->row(1)[1] * A0.dot(D));
+				R = abs(C->row(0)[1] * A->col(1).dot(D) - C->row(1)[1] * A->col(0).dot(D));
 				if (R > R0 + R1)
 					return false;
 				//A2 X B2
 				R0 = a0 * abs(C->row(1)[2]) + a1 * abs(C->row(0)[2]);
 				R1 = b0 * abs(C->row(2)[1]) + b1 * abs(C->row(2)[0]);
-				R = abs(C->row(0)[2] * A1.dot(D) - C->row(1)[2] * A0.dot(D));
+				R = abs(C->row(0)[2] * A->col(1).dot(D) - C->row(1)[2] * A->col(0).dot(D));
 				if (R > R0 + R1)
 					return false;
 

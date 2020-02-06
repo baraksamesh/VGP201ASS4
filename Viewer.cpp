@@ -4,7 +4,7 @@
 //
 // This Source Code Form is subject to the terms of the Mozilla Public License
 // v. 2.0. If a copy of the MPL was not distributed with this file, You can
-// obtain one at http://mozilla.org/MPL/2.0/.
+// obtain one at http://mozillA->org/MPL/2.0/.
 
 #include "Viewer.h"
 
@@ -41,6 +41,7 @@
 #include <igl/snap_to_canonical_view_quat.h>
 #include <igl/unproject.h>
 #include <igl/serialize.h>
+#include <igl/get_seconds.h>
 
 // Internal global variables used for glfw event handling
 //static igl::opengl::glfw::Viewer * __viewer;
@@ -59,7 +60,7 @@ namespace igl
 
 			IGL_INLINE void Viewer::init()
 			{
-
+				lastTimeStamp = 0;
 
 			}
 
@@ -620,7 +621,8 @@ namespace igl
 			///////////////////////////////////////////////////////////////////////////////////////////////////////
 
 			void Viewer::move() {
-				data(0).MyTranslate(dir * speed);
+				//std::cout << get_seconds()/10000000000 << std::endl;
+				data(0).MyTranslate(dir * speed * get_seconds() / 10000000000);
 			}
 
 			void Viewer::make_tree(Eigen::MatrixXd V, Eigen::MatrixXi F, int idx) {
@@ -629,16 +631,6 @@ namespace igl
 				tree.init(V, F);
 				trees[idx] = tree;
 				add_box(tree, idx, Eigen::RowVector3d(0, 1, 0));
-			}
-
-			void Viewer::make_trees() {
-				trees.resize(data_list.size());
-				for (int i = 0; i < data_list.size(); i++) {
-					igl::AABB<Eigen::MatrixXd, 3> tree;
-					tree.init(data(i).V, data(i).F);
-					trees[i] = tree;
-					add_box(tree, i, Eigen::RowVector3d(0, 1, 0));
-				}
 			}
 
 			void Viewer::initBoxes() {
@@ -699,142 +691,120 @@ namespace igl
 
 			}
 
-			void Viewer::remove_box(int idx) {
-				int size = data(idx).V.rows();
-				data(idx).V.row(size - 1) = Eigen::RowVector3d::Zero();
-				data(idx).V.row(size - 2) = Eigen::RowVector3d::Zero();
-				data(idx).V.row(size - 3) = Eigen::RowVector3d::Zero();
-				data(idx).V.row(size - 4) = Eigen::RowVector3d::Zero();
-				data(idx).V.row(size - 5) = Eigen::RowVector3d::Zero();
-				data(idx).V.row(size - 6) = Eigen::RowVector3d::Zero();
-				data(idx).V.row(size - 7) = Eigen::RowVector3d::Zero();
-				data(idx).V.row(size - 8) = Eigen::RowVector3d::Zero();
-			}
 
+			bool Viewer::are_trees_touching(Eigen::AlignedBox3d box1, Eigen::AlignedBox3d box2, int idx1, int idx2, Eigen::Matrix3d* A, Eigen::Matrix3d* B, Eigen::Matrix3d* C) {
 
-			bool Viewer::are_trees_touching(igl::AABB<Eigen::MatrixXd, 3>& tree1, igl::AABB<Eigen::MatrixXd, 3>& tree2, int idx1, int idx2) {
+				float a0 = box1.sizes()[0] / 2;
+				float a1 = box1.sizes()[1] / 2;
+				float a2 = box1.sizes()[2] / 2;
 
-				float a0 = tree1.m_box.sizes()[0] / 2;//(tree1.m_box.corner(tree1.m_box.BottomLeftFloor) - tree1.m_box.corner(tree1.m_box.BottomRightFloor)).norm() / 2;
-				float a1 = tree1.m_box.sizes()[1] / 2;//(tree1.m_box.corner(tree1.m_box.BottomLeftFloor) - tree1.m_box.corner(tree1.m_box.TopLeftFloor)).norm() / 2;
-				float a2 = tree1.m_box.sizes()[2] / 2;//(tree1.m_box.corner(tree1.m_box.BottomLeftFloor) - tree1.m_box.corner(tree1.m_box.BottomLeftCeil)).norm() / 2;
+				float b0 = box2.sizes()[0] / 2;
+				float b1 = box2.sizes()[1] / 2;
+				float b2 = box2.sizes()[2] / 2;
 
-				float b0 = tree2.m_box.sizes()[0] / 2;//(tree2.m_box.corner(tree2.m_box.BottomLeftFloor) - tree2.m_box.corner(tree2.m_box.BottomRightFloor)).norm() / 2;
-				float b1 = tree2.m_box.sizes()[1] / 2;//(tree2.m_box.corner(tree2.m_box.BottomLeftFloor) - tree2.m_box.corner(tree2.m_box.TopLeftFloor)).norm() / 2;
-				float b2 = tree2.m_box.sizes()[2] / 2;//(tree2.m_box.corner(tree2.m_box.BottomLeftFloor) - tree2.m_box.corner(tree2.m_box.BottomLeftCeil)).norm() / 2;
+				Eigen::RowVector3d A0 = A->col(0);
+				Eigen::RowVector3d A1 = A->col(1);
+				Eigen::RowVector3d A2 = A->col(2);
 
-				//Eigen::Matrix3d A = data(idx1).GetRotation().cast<double>() * Eigen::Matrix3d::Identity();
-				Eigen::RowVector3d A0 = data(idx1).GetRotation().cast<double>() * Eigen::Vector3d(1, 0, 0); //A.col(1);
-				Eigen::RowVector3d A1 = data(idx1).GetRotation().cast<double>() * Eigen::Vector3d(0, 1, 0); //A.col(2);
-				Eigen::RowVector3d A2 = data(idx1).GetRotation().cast<double>() * Eigen::Vector3d(0, 0, 1); //A.col(0);
-				Eigen::Matrix3d A;
-				A << A0[0], A1[0], A2[0],
-					A0[1], A1[1], A2[1],
-					A0[2], A1[2], A2[2];
+				Eigen::Vector3d B0 = B->col(0);
+				Eigen::Vector3d B1 = B->col(1);
+				Eigen::Vector3d B2 = B->col(2);
 
-				//Eigen::Matrix3d B = data(idx2).GetRotation().cast<double>() * Eigen::Matrix3d::Identity();
-				Eigen::Vector3d B0 = data(idx2).GetRotation().cast<double>() * Eigen::Vector3d(1, 0, 0); //B.col(1);
-				Eigen::Vector3d B1 = data(idx2).GetRotation().cast<double>() * Eigen::Vector3d(0, 1, 0); //B.col(2);
-				Eigen::Vector3d B2 = data(idx2).GetRotation().cast<double>() * Eigen::Vector3d(0, 0, 1); //B.col(0);
-				Eigen::Matrix3d B;
-				B << B0[0], B1[0], B2[0],
-					B0[1], B1[1], B2[1],
-					B0[2], B1[2], B2[2];
+				Eigen::Vector4d c1 = Eigen::Vector4d(box1.center()[0], box1.center()[1], box1.center()[2], 1);
+				Eigen::Vector4d c2 = Eigen::Vector4d(box2.center()[0], box2.center()[1], box2.center()[2], 1);
 
-				Eigen::Vector4d c1 = Eigen::Vector4d(tree1.m_box.center()[0], tree1.m_box.center()[1], tree1.m_box.center()[2], 1);
-				Eigen::Vector4d c2 = Eigen::Vector4d(tree2.m_box.center()[0], tree2.m_box.center()[1], tree2.m_box.center()[2], 1);
-
-				Eigen::Matrix3d C = A.transpose() * B;
 				Eigen::Vector4d D4 = data(idx2).MakeTrans().cast<double>() * c2 - data(idx1).MakeTrans().cast<double>() * c1;
 				Eigen::Vector3d D = D4.head(3);
 
+
 				//A0
 				double R0 = a0;
-				double R1 = b0 * abs(C.row(0)[0]) + b1 * abs(C.row(0)[1]) + b2 * abs(C.row(0)[2]);
+				double R1 = b0 * abs(C->row(0)[0]) + b1 * abs(C->row(0)[1]) + b2 * abs(C->row(0)[2]);
 				double R = abs(A0.dot(D));
 				if (R > R0 + R1)
 					return false;
 				//A1
 				R0 = a1;
-				R1 = b0 * abs(C.row(1)[0]) + b1 * abs(C.row(1)[1]) + b2 * abs(C.row(1)[2]);
+				R1 = b0 * abs(C->row(1)[0]) + b1 * abs(C->row(1)[1]) + b2 * abs(C->row(1)[2]);
 				R = abs(A1.dot(D));
 				if (R > R0 + R1)
 					return false;
 				//A2
 				R0 = a2;
-				R1 = b0 * abs(C.row(2)[0]) + b1 * abs(C.row(2)[1]) + b2 * abs(C.row(2)[2]);
+				R1 = b0 * abs(C->row(2)[0]) + b1 * abs(C->row(2)[1]) + b2 * abs(C->row(2)[2]);
 				R = abs(A2.dot(D));
 				if (R > R0 + R1)
 					return false;
 				//B0
-				R0 = a0 * abs(C.row(0)[0]) + a1 * abs(C.row(1)[0]) + a2 * abs(C.row(2)[0]);
+				R0 = a0 * abs(C->row(0)[0]) + a1 * abs(C->row(1)[0]) + a2 * abs(C->row(2)[0]);
 				R1 = b0;
 				R = abs(B0.dot(D));
 				if (R > R0 + R1)
 					return false;
 				//B1
-				R0 = a0 * abs(C.row(0)[1]) + a1 * abs(C.row(1)[1]) + a2 * abs(C.row(2)[1]);
+				R0 = a0 * abs(C->row(0)[1]) + a1 * abs(C->row(1)[1]) + a2 * abs(C->row(2)[1]);
 				R1 = b1;
 				R = abs(B1.dot(D));
 				if (R > R0 + R1)
 					return false;
 				//B2
-				R0 = a0 * abs(C.row(0)[2]) + a1 * abs(C.row(1)[2]) + a2 * abs(C.row(2)[2]);
+				R0 = a0 * abs(C->row(0)[2]) + a1 * abs(C->row(1)[2]) + a2 * abs(C->row(2)[2]);
 				R1 = b2;
 				R = abs(B2.dot(D));
 				if (R > R0 + R1)
 					return false;
 				//A0 X B0
-				R0 = a1 * abs(C.row(2)[0]) + a2 * abs(C.row(1)[0]);
-				R1 = b1 * abs(C.row(0)[2]) + b2 * abs(C.row(0)[1]);
-				R = abs(C.row(1)[0] * A2.dot(D) - C.row(2)[0] * A1.dot(D));
+				R0 = a1 * abs(C->row(2)[0]) + a2 * abs(C->row(1)[0]);
+				R1 = b1 * abs(C->row(0)[2]) + b2 * abs(C->row(0)[1]);
+				R = abs(C->row(1)[0] * A2.dot(D) - C->row(2)[0] * A1.dot(D));
 				if (R > R0 + R1)
 					return false;
 				//A0 X B1
-				R0 = a1 * abs(C.row(2)[1]) + a2 * abs(C.row(1)[1]);
-				R1 = b0 * abs(C.row(0)[2]) + b2 * abs(C.row(0)[0]);
-				R = abs(C.row(1)[1] * A2.dot(D) - C.row(2)[1] * A1.dot(D));
+				R0 = a1 * abs(C->row(2)[1]) + a2 * abs(C->row(1)[1]);
+				R1 = b0 * abs(C->row(0)[2]) + b2 * abs(C->row(0)[0]);
+				R = abs(C->row(1)[1] * A2.dot(D) - C->row(2)[1] * A1.dot(D));
 				if (R > R0 + R1)
 					return false;
 				//A0 X B2
-				R0 = a1 * abs(C.row(2)[2]) + a2 * abs(C.row(1)[2]);
-				R1 = b0 * abs(C.row(0)[1]) + b1 * abs(C.row(0)[0]);
-				R = abs(C.row(1)[2] * A2.dot(D) - C.row(2)[2] * A1.dot(D));
+				R0 = a1 * abs(C->row(2)[2]) + a2 * abs(C->row(1)[2]);
+				R1 = b0 * abs(C->row(0)[1]) + b1 * abs(C->row(0)[0]);
+				R = abs(C->row(1)[2] * A2.dot(D) - C->row(2)[2] * A1.dot(D));
 				if (R > R0 + R1)
 					return false;
 				//A1 X B0
-				R0 = a0 * abs(C.row(2)[0]) + a2 * abs(C.row(0)[0]);
-				R1 = b1 * abs(C.row(1)[2]) + b2 * abs(C.row(1)[1]);
-				R = abs(C.row(2)[0] * A0.dot(D) - C.row(0)[0] * A2.dot(D));
+				R0 = a0 * abs(C->row(2)[0]) + a2 * abs(C->row(0)[0]);
+				R1 = b1 * abs(C->row(1)[2]) + b2 * abs(C->row(1)[1]);
+				R = abs(C->row(2)[0] * A0.dot(D) - C->row(0)[0] * A2.dot(D));
 				if (R > R0 + R1)
 					return false;
 				//A1 X B1
-				R0 = a0 * abs(C.row(2)[1]) + a2 * abs(C.row(0)[1]);
-				R1 = b0 * abs(C.row(1)[2]) + b2 * abs(C.row(1)[0]);
-				R = abs(C.row(2)[1] * A0.dot(D) - C.row(0)[1] * A2.dot(D));
+				R0 = a0 * abs(C->row(2)[1]) + a2 * abs(C->row(0)[1]);
+				R1 = b0 * abs(C->row(1)[2]) + b2 * abs(C->row(1)[0]);
+				R = abs(C->row(2)[1] * A0.dot(D) - C->row(0)[1] * A2.dot(D));
 				if (R > R0 + R1)
 					return false;
 				//A1 X B2
-				R0 = a0 * abs(C.row(2)[2]) + a2 * abs(C.row(0)[2]);
-				R1 = b0 * abs(C.row(1)[1]) + b1 * abs(C.row(1)[0]);
-				R = abs(C.row(2)[2] * A0.dot(D) - C.row(0)[2] * A2.dot(D));
+				R0 = a0 * abs(C->row(2)[2]) + a2 * abs(C->row(0)[2]);
+				R1 = b0 * abs(C->row(1)[1]) + b1 * abs(C->row(1)[0]);
+				R = abs(C->row(2)[2] * A0.dot(D) - C->row(0)[2] * A2.dot(D));
 				if (R > R0 + R1)
 					return false;
 				//A2 X B0
-				R0 = a0 * abs(C.row(1)[0]) + a1 * abs(C.row(0)[0]);
-				R1 = b1 * abs(C.row(2)[2]) + b2 * abs(C.row(2)[1]);
-				R = abs(C.row(0)[0] * A1.dot(D) - C.row(1)[0] * A0.dot(D));
+				R0 = a0 * abs(C->row(1)[0]) + a1 * abs(C->row(0)[0]);
+				R1 = b1 * abs(C->row(2)[2]) + b2 * abs(C->row(2)[1]);
+				R = abs(C->row(0)[0] * A1.dot(D) - C->row(1)[0] * A0.dot(D));
 				if (R > R0 + R1)
 					return false;
 				//A2 X B1
-				R0 = a0 * abs(C.row(1)[1]) + a1 * abs(C.row(0)[1]);
-				R1 = b0 * abs(C.row(2)[2]) + b2 * abs(C.row(2)[0]);
-				R = abs(C.row(0)[1] * A1.dot(D) - C.row(1)[1] * A0.dot(D));
+				R0 = a0 * abs(C->row(1)[1]) + a1 * abs(C->row(0)[1]);
+				R1 = b0 * abs(C->row(2)[2]) + b2 * abs(C->row(2)[0]);
+				R = abs(C->row(0)[1] * A1.dot(D) - C->row(1)[1] * A0.dot(D));
 				if (R > R0 + R1)
 					return false;
 				//A2 X B2
-				R0 = a0 * abs(C.row(1)[2]) + a1 * abs(C.row(0)[2]);
-				R1 = b0 * abs(C.row(2)[1]) + b1 * abs(C.row(2)[0]);
-				R = abs(C.row(0)[2] * A1.dot(D) - C.row(1)[2] * A0.dot(D));
+				R0 = a0 * abs(C->row(1)[2]) + a1 * abs(C->row(0)[2]);
+				R1 = b0 * abs(C->row(2)[1]) + b1 * abs(C->row(2)[0]);
+				R = abs(C->row(0)[2] * A1.dot(D) - C->row(1)[2] * A0.dot(D));
 				if (R > R0 + R1)
 					return false;
 
@@ -845,43 +815,15 @@ namespace igl
 				igl::AABB<Eigen::MatrixXd, 3> tree1 = trees[idx1];
 				igl::AABB<Eigen::MatrixXd, 3> tree2 = trees[idx2];
 
-				bool touching = collision_detection(tree1, tree2, idx1, idx2);//are_trees_touching(tree1, tree2, idx1, idx2);
-				/*while (touching && !tree1.is_leaf() && !tree2.is_leaf()) {
-					touching = are_trees_touching(*tree1.m_left, *tree2.m_left, idx1, idx2);
-					if (touching) {
-						tree1 = *tree1.m_left;
-						tree2 = *tree2.m_left;
-					}
-					else {
-						touching = are_trees_touching(*tree1.m_left, *tree2.m_right, idx1, idx2);
-						if (touching) {
-							tree1 = *tree1.m_left;
-							tree2 = *tree2.m_right;
-						}
-						else {
-							touching = are_trees_touching(*tree1.m_right, *tree2.m_left, idx1, idx2);
-							if (touching) {
-								tree1 = *tree1.m_right;
-								tree2 = *tree2.m_left;
-							}
-							else {
-								touching = are_trees_touching(*tree1.m_right, *tree2.m_right, idx1, idx2);
-								if (touching) {
-									tree1 = *tree1.m_right;
-									tree2 = *tree2.m_right;
-								}
-							}
-						}
-					}
-					if (touching) {
-						add_box(tree1, 0);
-						add_box(tree2, 1);
-					}
-				}*/
-				return touching;
+				Eigen::Matrix3d A = data(idx1).GetRotation().cast<double>();
+				Eigen::Matrix3d B = data(idx2).GetRotation().cast<double>();
+				Eigen::Matrix3d C = A.transpose() * B;
+
+
+				return collision_detection(tree1, tree2, idx1, idx2, &A, &B, &C);
 			}
 
-			bool Viewer::collision_detection(igl::AABB<Eigen::MatrixXd, 3> &tree1, igl::AABB<Eigen::MatrixXd, 3> &tree2, int idx1, int idx2) {
+			bool Viewer::collision_detection(igl::AABB<Eigen::MatrixXd, 3>& tree1, igl::AABB<Eigen::MatrixXd, 3>& tree2, int idx1, int idx2, Eigen::Matrix3d* A, Eigen::Matrix3d* B, Eigen::Matrix3d* C) {
 
 				bool touching = false;
 
@@ -892,48 +834,48 @@ namespace igl
 				}
 
 				else if (tree1.is_leaf() && !tree2.is_leaf()) {
-					if (are_trees_touching(tree1, *tree2.m_left, idx1, idx2)) {
-						touching = collision_detection(tree1, *tree2.m_left, idx1, idx2);
+					if (are_trees_touching(tree1.m_box, tree2.m_left->m_box, idx1, idx2, A, B, C)) {
+						touching = collision_detection(tree1, *tree2.m_left, idx1, idx2, A, B, C);
 						if (touching)
 							return true;
 					}
-					if (are_trees_touching(tree1, *tree2.m_right, idx1, idx2)) {
-						touching = collision_detection(tree1, *tree2.m_right, idx1, idx2);
+					if (are_trees_touching(tree1.m_box, tree2.m_right->m_box, idx1, idx2, A, B, C)) {
+						touching = collision_detection(tree1, *tree2.m_right, idx1, idx2, A, B, C);
 						if (touching)
 							return true;
 					}
 				}
 
 				else if (!tree1.is_leaf() && tree2.is_leaf()) {
-					if (are_trees_touching(*tree1.m_left, tree2, idx1, idx2)) {
-						touching = collision_detection(*tree1.m_left, tree2, idx1, idx2);
+					if (are_trees_touching(tree1.m_left->m_box, tree2.m_box, idx1, idx2, A, B, C)) {
+						touching = collision_detection(*tree1.m_left, tree2, idx1, idx2, A, B, C);
 						if (touching)
 							return true;
 					}
-					if (are_trees_touching(*tree1.m_right, tree2, idx1, idx2)) {
-						touching = collision_detection(*tree1.m_right, tree2, idx1, idx2);
+					if (are_trees_touching(tree1.m_right->m_box, tree2.m_box, idx1, idx2, A, B, C)) {
+						touching = collision_detection(*tree1.m_right, tree2, idx1, idx2, A, B, C);
 						if (touching)
 							return true;
 					}
 				}
 				else {//neither are leaves
-					if (are_trees_touching(*tree1.m_left, *tree2.m_left, idx1, idx2)) {
-						touching = collision_detection(*tree1.m_left, *tree2.m_left, idx1, idx2);
+					if (are_trees_touching(tree1.m_left->m_box, tree2.m_left->m_box, idx1, idx2, A, B, C)) {
+						touching = collision_detection(*tree1.m_left, *tree2.m_left, idx1, idx2, A, B, C);
 						if (touching)
 							return true;
 					}
-					if (are_trees_touching(*tree1.m_left, *tree2.m_right, idx1, idx2)) {
-						touching = collision_detection(*tree1.m_left, *tree2.m_right, idx1, idx2);
+					if (are_trees_touching(tree1.m_left->m_box, tree2.m_right->m_box, idx1, idx2, A, B, C)) {
+						touching = collision_detection(*tree1.m_left, *tree2.m_right, idx1, idx2, A, B, C);
 						if (touching)
 							return true;
 					}
-					if (are_trees_touching(*tree1.m_right, *tree2.m_left, idx1, idx2)) {
-						touching = collision_detection(*tree1.m_right, *tree2.m_left, idx1, idx2);
+					if (are_trees_touching(tree1.m_right->m_box, tree2.m_left->m_box, idx1, idx2, A, B, C)) {
+						touching = collision_detection(*tree1.m_right, *tree2.m_left, idx1, idx2, A, B, C);
 						if (touching)
 							return true;
 					}
-					if (are_trees_touching(*tree1.m_right, *tree2.m_right, idx1, idx2)) {
-						touching = collision_detection(*tree1.m_right, *tree2.m_right, idx1, idx2);
+					if (are_trees_touching(tree1.m_right->m_box, tree2.m_right->m_box, idx1, idx2, A, B, C)) {
+						touching = collision_detection(*tree1.m_right, *tree2.m_right, idx1, idx2, A, B, C);
 						if (touching)
 							return true;
 					}

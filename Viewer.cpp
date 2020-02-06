@@ -692,15 +692,15 @@ namespace igl
 			}
 
 
-			bool Viewer::are_trees_touching(Eigen::AlignedBox3d box1, Eigen::AlignedBox3d box2, int idx1, int idx2, Eigen::Matrix3d* A, Eigen::Matrix3d* B, Eigen::Matrix3d* C) {
+			bool Viewer::are_trees_touching(Eigen::AlignedBox3d* box1, Eigen::AlignedBox3d* box2, int idx1, int idx2, Eigen::Matrix3d* A, Eigen::Matrix3d* B, Eigen::Matrix3d* C) {
 
-				float a0 = box1.sizes()[0] / 2;
-				float a1 = box1.sizes()[1] / 2;
-				float a2 = box1.sizes()[2] / 2;
-
-				float b0 = box2.sizes()[0] / 2;
-				float b1 = box2.sizes()[1] / 2;
-				float b2 = box2.sizes()[2] / 2;
+				float a0 = box1->sizes()[0] / 2;
+				float a1 = box1->sizes()[1] / 2;
+				float a2 = box1->sizes()[2] / 2;
+							   
+				float b0 = box2->sizes()[0] / 2;
+				float b1 = box2->sizes()[1] / 2;
+				float b2 = box2->sizes()[2] / 2;
 
 				//Eigen::RowVector3d A0 = A->col(0);
 				//Eigen::RowVector3d A1 = A->col(1);
@@ -713,8 +713,8 @@ namespace igl
 				//Eigen::Vector4d c1 = Eigen::Vector4d(box1.center()[0], box1.center()[1], box1.center()[2], 1);
 				//Eigen::Vector4d c2 = Eigen::Vector4d(box2.center()[0], box2.center()[1], box2.center()[2], 1);
 
-				Eigen::Vector3d D = ( data(idx2).MakeTrans().cast<double>() * Eigen::Vector4d(box2.center()[0], box2.center()[1], box2.center()[2], 1)
-					- data(idx1).MakeTrans().cast<double>() * Eigen::Vector4d(box1.center()[0], box1.center()[1], box1.center()[2], 1) ).head(3);
+				Eigen::Vector3d D = ( data(idx2).MakeTrans().cast<double>() * Eigen::Vector4d(box2->center()[0], box2->center()[1], box2->center()[2], 1)
+					- data(idx1).MakeTrans().cast<double>() * Eigen::Vector4d(box1->center()[0], box1->center()[1], box1->center()[2], 1) ).head(3);
 				//Eigen::Vector3d D = D4.head(3);
 
 
@@ -813,70 +813,68 @@ namespace igl
 			}
 
 			bool Viewer::collision_detection(int idx1, int idx2) {
-				igl::AABB<Eigen::MatrixXd, 3> tree1 = trees[idx1];
-				igl::AABB<Eigen::MatrixXd, 3> tree2 = trees[idx2];
 
 				Eigen::Matrix3d A = data(idx1).GetRotation().cast<double>();
 				Eigen::Matrix3d B = data(idx2).GetRotation().cast<double>();
 				Eigen::Matrix3d C = A.transpose() * B;
 
 
-				return collision_detection(tree1, tree2, idx1, idx2, &A, &B, &C);
+				return collision_detection(&trees[idx1], &trees[idx2], idx1, idx2, &A, &B, &C);
 			}
 
-			bool Viewer::collision_detection(igl::AABB<Eigen::MatrixXd, 3>& tree1, igl::AABB<Eigen::MatrixXd, 3>& tree2, int idx1, int idx2, Eigen::Matrix3d* A, Eigen::Matrix3d* B, Eigen::Matrix3d* C) {
+			bool Viewer::collision_detection(igl::AABB<Eigen::MatrixXd, 3>* tree1, igl::AABB<Eigen::MatrixXd, 3>* tree2, int idx1, int idx2, Eigen::Matrix3d* A, Eigen::Matrix3d* B, Eigen::Matrix3d* C) {
 
 				bool touching = false;
 
-				if (tree1.is_leaf() && tree2.is_leaf()) {
-					add_box(tree1, 0, Eigen::RowVector3d(1, 1, 1));
-					add_box(tree2, 1, Eigen::RowVector3d(1, 1, 1));
+				if (tree1->is_leaf() && tree2->is_leaf()) {
+					add_box(*tree1, 0, Eigen::RowVector3d(1, 1, 1));
+					add_box(*tree2, 1, Eigen::RowVector3d(1, 1, 1));
 					return true;
 				}
 
-				else if (tree1.is_leaf() && !tree2.is_leaf()) {
-					if (are_trees_touching(tree1.m_box, tree2.m_left->m_box, idx1, idx2, A, B, C)) {
-						touching = collision_detection(tree1, *tree2.m_left, idx1, idx2, A, B, C);
+				else if (tree1->is_leaf() && !tree2->is_leaf()) {
+					if (are_trees_touching(&(tree1->m_box), &(tree2->m_left->m_box), idx1, idx2, A, B, C)) {
+						touching = collision_detection(tree1, tree2->m_left, idx1, idx2, A, B, C);
 						if (touching)
 							return true;
 					}
-					if (are_trees_touching(tree1.m_box, tree2.m_right->m_box, idx1, idx2, A, B, C)) {
-						touching = collision_detection(tree1, *tree2.m_right, idx1, idx2, A, B, C);
+					if (are_trees_touching(&(tree1->m_box), &(tree2->m_right->m_box), idx1, idx2, A, B, C)) {
+						touching = collision_detection(tree1, tree2->m_right, idx1, idx2, A, B, C);
 						if (touching)
 							return true;
 					}
 				}
 
-				else if (!tree1.is_leaf() && tree2.is_leaf()) {
-					if (are_trees_touching(tree1.m_left->m_box, tree2.m_box, idx1, idx2, A, B, C)) {
-						touching = collision_detection(*tree1.m_left, tree2, idx1, idx2, A, B, C);
+				else if (!tree1->is_leaf() && tree2->is_leaf()) {
+					if (are_trees_touching(&(tree1->m_left->m_box), &(tree2->m_box), idx1, idx2, A, B, C)) {
+						touching = collision_detection(tree1->m_left, tree2, idx1, idx2, A, B, C);
 						if (touching)
 							return true;
 					}
-					if (are_trees_touching(tree1.m_right->m_box, tree2.m_box, idx1, idx2, A, B, C)) {
-						touching = collision_detection(*tree1.m_right, tree2, idx1, idx2, A, B, C);
+					if (are_trees_touching(&(tree1->m_right->m_box), &(tree2->m_box), idx1, idx2, A, B, C)) {
+						touching = collision_detection(tree1->m_right, tree2, idx1, idx2, A, B, C);
 						if (touching)
 							return true;
 					}
 				}
 				else {//neither are leaves
-					if (are_trees_touching(tree1.m_left->m_box, tree2.m_left->m_box, idx1, idx2, A, B, C)) {
-						touching = collision_detection(*tree1.m_left, *tree2.m_left, idx1, idx2, A, B, C);
+					if (are_trees_touching(&(tree1->m_left->m_box), &(tree2->m_left->m_box), idx1, idx2, A, B, C)) {
+						touching = collision_detection(tree1->m_left, tree2->m_left, idx1, idx2, A, B, C);
 						if (touching)
 							return true;
 					}
-					if (are_trees_touching(tree1.m_left->m_box, tree2.m_right->m_box, idx1, idx2, A, B, C)) {
-						touching = collision_detection(*tree1.m_left, *tree2.m_right, idx1, idx2, A, B, C);
+					if (are_trees_touching(&(tree1->m_left->m_box), &(tree2->m_right->m_box), idx1, idx2, A, B, C)) {
+						touching = collision_detection(tree1->m_left, tree2->m_right, idx1, idx2, A, B, C);
 						if (touching)
 							return true;
 					}
-					if (are_trees_touching(tree1.m_right->m_box, tree2.m_left->m_box, idx1, idx2, A, B, C)) {
-						touching = collision_detection(*tree1.m_right, *tree2.m_left, idx1, idx2, A, B, C);
+					if (are_trees_touching(&(tree1->m_right->m_box), &(tree2->m_left->m_box), idx1, idx2, A, B, C)) {
+						touching = collision_detection(tree1->m_right, tree2->m_left, idx1, idx2, A, B, C);
 						if (touching)
 							return true;
 					}
-					if (are_trees_touching(tree1.m_right->m_box, tree2.m_right->m_box, idx1, idx2, A, B, C)) {
-						touching = collision_detection(*tree1.m_right, *tree2.m_right, idx1, idx2, A, B, C);
+					if (are_trees_touching(&(tree1->m_right->m_box), &(tree2->m_right->m_box), idx1, idx2, A, B, C)) {
+						touching = collision_detection(tree1->m_right, tree2->m_right, idx1, idx2, A, B, C);
 						if (touching)
 							return true;
 					}

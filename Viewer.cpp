@@ -468,13 +468,17 @@ namespace igl
 
 
 			Eigen::Matrix4f Viewer::MakeParentTrans(int mesh_id) {
-				if (getParentIndex(mesh_id) == -1 || getParentIndex(mesh_id) == mesh_id)
-					return Eigen::Transform<float, 3, Eigen::Affine>::Identity().matrix();
-				Eigen::Matrix4f t = data_list[getParentIndex(mesh_id)].MakeTrans();
-				Eigen::Matrix4f tp = MakeParentTrans(getParentIndex(mesh_id));
-				return MakeParentTrans(getParentIndex(mesh_id)) * data_list[getParentIndex(mesh_id)].MakeTrans();
-			}
+				
+				Eigen::Matrix4f mat = Eigen::Matrix4f::Identity();
 
+				int i = getParentIndex(mesh_id);
+				while (i != -1) {
+					mat = data_list[i].MakeTrans() * mat;
+					i = getParentIndex(i);
+				}
+
+				return mat;
+			}
 			void Viewer::ik() {
 				//iking = false;
 				Eigen::Vector3f d = data(iSphere).MakeTrans().block(0, 1, 3, 3).col(2);
@@ -576,39 +580,10 @@ namespace igl
 				for (int i = iFirstLink; i <= iLastLink; i++) {
 
 					Eigen::Matrix3f R = data(i).GetRotation();
+					float angleY1 = 0;
 
-					float r00 = R.row(0)[0];
-					float r01 = R.row(0)[1];
-					float r02 = R.row(0)[2];
-					float r10 = R.row(1)[0];
-					float r11 = R.row(1)[1];
-					float r12 = R.row(1)[2];
-					float r20 = R.row(2)[0];
-					float r21 = R.row(2)[1];
-					float r22 = R.row(2)[2];
-
-					float angleY0;
-					float angleX;
-					float angleY1;
-
-					//YXY
-					if (r11 < 1) {
-						if (r11 > -1) {
-							angleX = acosf(r11);
-							angleY0 = atan2f(r01, r21);
-							angleY1 = atan2f(r10, -r12);
-						}
-						else { //r11 = -1
-							angleX = acosf(-1);
-							angleY0 = -atan2f(r02, r00);
-							angleY1 = 0;
-						}
-					}
-					else {//r11 = 1
-						angleX = 0;
-						angleY0 = atan2f(r02, r00);
-						angleY1 = 0;
-					}
+					if (R.row(1)[1] < 1 && R.row(1)[1] > -1)
+							angleY1 = atan2f(R.row(1)[0], -R.row(1)[2]);
 
 					data(i).MyRotate(Y, -angleY1);
 					if (i != iLastLink)

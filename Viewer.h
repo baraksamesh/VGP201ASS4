@@ -129,9 +129,9 @@ namespace igl
 				void make_tree(Eigen::MatrixXd V, Eigen::MatrixXi F, int idx);
 				void initBoxes();
 				void add_box(igl::AABB<Eigen::MatrixXd, 3>& tree, int idx, Eigen::RowVector3d color, bool deleteOld = false);
-				bool are_trees_touching(Eigen::AlignedBox3d box1, Eigen::AlignedBox3d box2, int idx1, int idx2, Eigen::Matrix3d* A8, Eigen::Matrix3d* B8, Eigen::Matrix3d* C8);
+				bool are_trees_touching(Eigen::AlignedBox3d* box1, Eigen::AlignedBox3d* box2, int idx1, int idx2, Eigen::Matrix3d* A8, Eigen::Matrix3d* B8, Eigen::Matrix3d* C8);
 				bool collision_detection(int idx1, int idx2);
-				bool collision_detection(igl::AABB<Eigen::MatrixXd, 3>& tree1, igl::AABB<Eigen::MatrixXd, 3>& tree2, int idx1, int idx2, Eigen::Matrix3d* A, Eigen::Matrix3d* B, Eigen::Matrix3d* C);
+				bool collision_detection(igl::AABB<Eigen::MatrixXd, 3>* tree1, igl::AABB<Eigen::MatrixXd, 3>* tree2, int idx1, int idx2, Eigen::Matrix3d* A, Eigen::Matrix3d* B, Eigen::Matrix3d* C);
 
 
 			public:

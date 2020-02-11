@@ -195,6 +195,9 @@ namespace igl
 				//  if (plugins[i]->post_load())
 				//    return true;
 
+				data().tree = new igl::AABB<Eigen::MatrixXd, 3>();
+				data().tree->init(data().V, data().F);
+
 				return true;
 			}
 
@@ -463,25 +466,27 @@ namespace igl
 
 			int igl::opengl::glfw::Viewer::getParentIndex(int index)
 			{
+				if (index > iLastLink)
+					return -1;
 				return parents[index];
 			}
 
 
 			Eigen::Matrix4f Viewer::MakeParentTrans(int mesh_id) {
-				
+
 				Eigen::Matrix4f mat = Eigen::Matrix4f::Identity();
 
 				int i = getParentIndex(mesh_id);
-				while (i != -1) {
+				while (i != -1 && i != getParentIndex(i)) {
 					mat = data_list[i].MakeTrans() * mat;
 					i = getParentIndex(i);
 				}
 
 				return mat;
 			}
-			void Viewer::ik() {
+			void Viewer::ik(int iTarget) {
 				//iking = false;
-				Eigen::Vector3f d = data(iSphere).MakeTrans().block(0, 1, 3, 3).col(2);
+				Eigen::Vector3f d = data(iTarget).MakeTrans().block(0, 1, 3, 3).col(2);
 				Eigen::Vector3f arm_base = data(iFirstLink).MakeTrans().block(0, 1, 3, 3).col(2);
 				float link_size = 2 * data(iFirstLink).V.colwise().maxCoeff()[1];
 				float num_of_links = iLastLink + 1;
@@ -507,12 +512,12 @@ namespace igl
 
 					float distance = (d - e).norm();
 
-					if (distance < 0.1) {
-						std::cout << "distance: " << distance << std::endl;
-						iking = false;
-						fin_rotate();
-						return;
-					}
+					//if (distance < 0.1) {
+					//	std::cout << "distance: " << distance << std::endl;
+					//	iking = false;
+					//	fin_rotate();
+					//	return;
+					//}
 
 					Eigen::Vector3f rotation_axis = GetParentsRotationInverse(i) * re.cross(rd).normalized();
 					float dot = rd.normalized().dot(re.normalized());
@@ -583,7 +588,7 @@ namespace igl
 					float angleY1 = 0;
 
 					if (R.row(1)[1] < 1 && R.row(1)[1] > -1)
-							angleY1 = atan2f(R.row(1)[0], -R.row(1)[2]);
+						angleY1 = atan2f(R.row(1)[0], -R.row(1)[2]);
 
 					data(i).MyRotate(Y, -angleY1);
 					if (i != iLastLink)
@@ -672,7 +677,7 @@ namespace igl
 				float a0 = box1->sizes()[0] / 2;
 				float a1 = box1->sizes()[1] / 2;
 				float a2 = box1->sizes()[2] / 2;
-							   
+
 				float b0 = box2->sizes()[0] / 2;
 				float b1 = box2->sizes()[1] / 2;
 				float b2 = box2->sizes()[2] / 2;
@@ -688,8 +693,8 @@ namespace igl
 				//Eigen::Vector4d c1 = Eigen::Vector4d(box1.center()[0], box1.center()[1], box1.center()[2], 1);
 				//Eigen::Vector4d c2 = Eigen::Vector4d(box2.center()[0], box2.center()[1], box2.center()[2], 1);
 
-				Eigen::Vector3d D = ( data(idx2).MakeTrans().cast<double>() * Eigen::Vector4d(box2->center()[0], box2->center()[1], box2->center()[2], 1)
-					- data(idx1).MakeTrans().cast<double>() * Eigen::Vector4d(box1->center()[0], box1->center()[1], box1->center()[2], 1) ).head(3);
+				Eigen::Vector3d D = (data(idx2).MakeTrans().cast<double>() * Eigen::Vector4d(box2->center()[0], box2->center()[1], box2->center()[2], 1)
+					- data(idx1).MakeTrans().cast<double>() * Eigen::Vector4d(box1->center()[0], box1->center()[1], box1->center()[2], 1)).head(3);
 				//Eigen::Vector3d D = D4.head(3);
 
 
@@ -787,14 +792,14 @@ namespace igl
 				return true;
 			}
 
-			bool Viewer::collision_detection(int idx1, int idx2) {
+			bool Viewer::collision_detection(int idx1, int iFood) {
 
-				Eigen::Matrix3d A = data(idx1).GetRotation().cast<double>();
-				Eigen::Matrix3d B = data(idx2).GetRotation().cast<double>();
+				Eigen::Matrix3d A = data(iLastLink).GetRotation().cast<double>();
+				Eigen::Matrix3d B = data(iFood).GetRotation().cast<double>();
 				Eigen::Matrix3d C = A.transpose() * B;
 
 
-				return collision_detection(&trees[idx1], &trees[idx2], idx1, idx2, &A, &B, &C);
+				return collision_detection(&trees[iLastLink], data(iFood).tree, iLastLink, iFood, &A, &B, &C);
 			}
 
 			bool Viewer::collision_detection(igl::AABB<Eigen::MatrixXd, 3>* tree1, igl::AABB<Eigen::MatrixXd, 3>* tree2, int idx1, int idx2, Eigen::Matrix3d* A, Eigen::Matrix3d* B, Eigen::Matrix3d* C) {
@@ -855,6 +860,17 @@ namespace igl
 					}
 				}
 				return false;
+			}
+
+
+			///////////////////////////////////////////////////////////////////////////////////////////////////////
+			/// PROJECT ////////////////////////////////////////////////////////////////////////////////////////////////
+			///////////////////////////////////////////////////////////////////////////////////////////////////////
+
+
+			void Viewer::AddFood() {
+				load_mesh_from_file("C: / VGP201 / EngineForAnimationCourse / tutorial / data / xcylinder.obj");
+				//Food*
 			}
 
 		} // end namespace

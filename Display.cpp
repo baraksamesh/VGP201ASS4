@@ -1,5 +1,3 @@
-
-
 #include <chrono>
 #include <thread>
 
@@ -117,17 +115,20 @@ bool Display::launch_rendering(bool loop)
 	glfwGetWindowSize(window, &windowWidth, &windowHeight);
 	renderer->post_resize(window, windowWidth, windowHeight);
 
+
 	while (!glfwWindowShouldClose(window))
 	{
 
 		double tic = igl::get_seconds();
 		renderer->draw(window);
 		glfwSwapBuffers(window);
-		if (renderer->GetScene()->iking)
-			renderer->GetScene()->ik();
-		if (renderer->GetScene()->speed != 0 && renderer->GetScene()->collision_detection(0, 1))
+		if (renderer->GetScene()->iking && renderer->GetScene()->selected_data_index > renderer->GetScene()->iLastLink)
+			renderer->GetScene()->ik(renderer->GetScene()->selected_data_index);
+		fm->MoveAll(igl::get_seconds() / 10000000000);
+		fm->CollisionDetection(renderer->GetScene()->selected_data_index);
+		/*if (renderer->GetScene()->speed != 0 && renderer->GetScene()->collision_detection(0, 1))
 			renderer->GetScene()->speed = 0;
-		renderer->GetScene()->move();
+		renderer->GetScene()->move();*/
 		if (renderer->core().is_animating || frame_counter++ < num_extra_frames)
 		{//motion
 
@@ -200,10 +201,13 @@ void Display::PollEvents()
 	glfwPollEvents();
 }
 
+void Display::SetFoodManager(igl::opengl::glfw::FoodManager* _fm)
+{
+	fm = _fm;
+}
+
 Display::~Display()
 {
 	glfwDestroyWindow(window);
 	glfwTerminate();
 }
-
-

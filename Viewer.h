@@ -121,7 +121,7 @@ namespace igl
 				int getParentIndex(int index);
 				Eigen::Matrix4f MakeParentTrans(int mesh_id);
 				void make_axis();
-				void ik();
+				void ik(int iTarget);
 				Eigen::Matrix3f GetParentsRotationInverse(int index);
 				void fin_rotate();
 
@@ -132,6 +132,8 @@ namespace igl
 				bool are_trees_touching(Eigen::AlignedBox3d* box1, Eigen::AlignedBox3d* box2, int idx1, int idx2, Eigen::Matrix3d* A8, Eigen::Matrix3d* B8, Eigen::Matrix3d* C8);
 				bool collision_detection(int idx1, int idx2);
 				bool collision_detection(igl::AABB<Eigen::MatrixXd, 3>* tree1, igl::AABB<Eigen::MatrixXd, 3>* tree2, int idx1, int idx2, Eigen::Matrix3d* A, Eigen::Matrix3d* B, Eigen::Matrix3d* C);
+
+				void AddFood();
 
 
 			public:
@@ -157,6 +159,8 @@ namespace igl
 				float lastTimeStamp;
 				Eigen::Vector3f dir;
 				std::vector <igl::AABB<Eigen::MatrixXd, 3>> trees;
+
+				//FoodManager fm;
 
 				// List of registered plugins
 			//    std::vector<ViewerPlugin*> plugins;

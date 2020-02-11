@@ -69,12 +69,12 @@ IGL_INLINE void Renderer::draw(GLFWwindow* window)
 			if (mesh.is_visible & core.id)
 			{
 				//IK
-				/*Eigen::Matrix4f trans = scn->MakeTrans();
-				if (mesh.id > 0 && scn->getParentIndex(mesh.id) != mesh.id)
+				Eigen::Matrix4f trans = scn->MakeTrans();
+				if (mesh.id > 0 && mesh.id <= scn->iLastLink && scn->getParentIndex(mesh.id) != mesh.id)
 					trans = scn->MakeTrans() * scn->MakeParentTrans(mesh.id);
-				core.draw(trans, mesh);*/
+				core.draw(trans, mesh);
 
-				core.draw(scn->MakeTrans(), mesh);
+				//core.draw(scn->MakeTrans(), mesh);
 			}
 		}
 	}
@@ -108,9 +108,9 @@ void Renderer::MouseProcessing(int button)
 	if (button == 1)
 	{
 		//IK
-		/*if (scn->selected_data_index != -1) {
+		if (scn->selected_data_index != -1) {
 			int idx = scn->iFirstLink;
-			if (scn->getParentIndex(scn->selected_data_index) == scn->selected_data_index)
+			if (scn->selected_data_index > scn->iLastLink || scn->getParentIndex(scn->selected_data_index) == scn->selected_data_index)
 				idx = scn->selected_data_index;
 			scn->data(idx).MyTranslate(Eigen::Vector3f(-xrel / 200.0f, 0, 0), scn);
 			scn->data(idx).MyTranslate(Eigen::Vector3f(0, yrel / 200.0f, 0), scn);
@@ -118,15 +118,15 @@ void Renderer::MouseProcessing(int button)
 		else {
 			scn->MyTranslate(Eigen::Vector3f(-xrel / 2000.0f, 0, 0));
 			scn->MyTranslate(Eigen::Vector3f(0, yrel / 2000.0f, 0));
-		}*/
-		if (scn->selected_data_index != -1) {
+		}
+		/*if (scn->selected_data_index != -1) {
 			scn->data().MyTranslate(Eigen::Vector3f(-xrel / 200.0f, 0, 0), scn);
 			scn->data().MyTranslate(Eigen::Vector3f(0, yrel / 200.0f, 0), scn);
 		}
 		else {
 			scn->MyTranslate(Eigen::Vector3f(-xrel / 2000.0f, 0, 0));
 			scn->MyTranslate(Eigen::Vector3f(0, yrel / 2000.0f, 0));
-		}
+		}*/
 
 	}
 	else
@@ -158,10 +158,10 @@ bool Renderer::Picking(double newx, double newy, float& foundZ)
 	Eigen::Matrix4f view = Eigen::Matrix4f::Identity(); // get identity matrix of view
 	igl::look_at(core().camera_eye, core().camera_center, core().camera_up, view);
 	//IK
-	/*view = view * (core().trackball_angle * Eigen::Scaling(core().camera_zoom * core().camera_base_zoom)
-		* Eigen::Translation3f(core().camera_translation + core().camera_base_translation)).matrix() * scn->MakeTrans() * scn->MakeParentTrans(scn->data().id) * scn->data().MakeTrans();*/
 	view = view * (core().trackball_angle * Eigen::Scaling(core().camera_zoom * core().camera_base_zoom)
-		* Eigen::Translation3f(core().camera_translation + core().camera_base_translation)).matrix() * scn->MakeTrans() * scn->data().MakeTrans();
+		* Eigen::Translation3f(core().camera_translation + core().camera_base_translation)).matrix() * scn->MakeTrans() * scn->MakeParentTrans(scn->data().id) * scn->data().MakeTrans();
+	//view = view * (core().trackball_angle * Eigen::Scaling(core().camera_zoom * core().camera_base_zoom)
+	//	* Eigen::Translation3f(core().camera_translation + core().camera_base_translation)).matrix() * scn->MakeTrans() * scn->data().MakeTrans();
 	if (igl::unproject_onto_mesh(Eigen::Vector2f(x, y), view,
 		core().proj, core().viewport, scn->data().V, scn->data().F, fid, bc))
 	{

@@ -84,14 +84,14 @@ static void glfw_mouse_scroll(GLFWwindow* window, double x, double y)
 	}
 	else {
 		//IK
-		/*Eigen::Vector3f amt = (view * Eigen::Vector4f(0, 0, 1, 1)).head(3) * 0.01 * y;
+		Eigen::Vector3f amt = (view * Eigen::Vector4f(0, 0, 1, 1)).head(3) * 0.01 * y;
 		if (idx <= rndr->GetScene()->iLastLink) {
 			rndr->GetScene()->data(rndr->GetScene()->iFirstLink).MyTranslate(amt, rndr->GetScene());
 		}
 		else {
 			rndr->GetScene()->data().MyTranslate(amt, rndr->GetScene());
-		}*/
-		Eigen::Vector3f amt = (view * Eigen::Vector4f(0, 0, 1, 1)).head(3) * 0.01 * y;
+		}
+		amt = (view * Eigen::Vector4f(0, 0, 1, 1)).head(3) * 0.01 * y;
 		rndr->GetScene()->data().MyTranslate(amt, rndr->GetScene());
 		rndr->GetScene()->data().MyTranslate(amt, rndr->GetScene());
 	}
@@ -177,16 +177,16 @@ static void glfw_key_callback(GLFWwindow* window, int key, int scancode, int act
 			scn->data().show_faceid = !scn->data().show_faceid;
 			break;
 		case GLFW_KEY_SPACE:
-			/*scn->iking = !scn->iking;
+			scn->iking = !scn->iking;
 			if (!scn->iking)
-				scn->fin_rotate();*/
-
+				scn->fin_rotate();
+			/*
 			if (scn->speed == 0) {
 				scn->speed = 0.02;
 				scn->initBoxes();
 			}
 			else
-				scn->speed = 0;
+				scn->speed = 0;*/
 			break;
 		case GLFW_KEY_UP:
 		{

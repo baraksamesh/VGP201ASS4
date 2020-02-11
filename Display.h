@@ -2,6 +2,7 @@
 #include <string>
 #include <GLFW/glfw3.h>
 #include "igl/opengl/glfw/renderer.h"
+#include "../../../../Workspace/tutorial/sandBox/FoodManager.h"
 #define EXIT_FAILURE 1
 struct GLFWwindow;
 
@@ -22,9 +23,14 @@ public:
 	void AddResizeCallBack(void (*windowsizefun)(GLFWwindow*, int, int));
 
 
+	void SetFoodManager(igl::opengl::glfw::FoodManager* fm);
+
 	~Display();
 private:
 	GLFWwindow* window;
+
+	igl::opengl::glfw::FoodManager* fm;
+
 	//Renderer* renderer;
 	//int highdpi;  //relation between width and height?
 

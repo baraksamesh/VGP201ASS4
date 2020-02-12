@@ -21,7 +21,7 @@ namespace igl
 
 				Food(float speed, Eigen::Vector3f dir, int price, int mesh_index, int radious, Viewer* scn);
 				void Move(double delta_time);
-				int BeConsumed();
+				void BeConsumed();
 
 
 			private:

@@ -156,9 +156,8 @@ namespace igl
 				int iLastLink;
 
 				float speed;
-				float lastTimeStamp;
 				Eigen::Vector3f dir;
-				std::vector <igl::AABB<Eigen::MatrixXd, 3>> trees;
+				int score;
 
 				//FoodManager fm;
 

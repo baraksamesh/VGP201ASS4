@@ -26,13 +26,22 @@ void igl::opengl::glfw::FoodManager::AddFood(float speed, Eigen::Vector3f dir, i
 
 bool igl::opengl::glfw::FoodManager::CollisionDetection(int foodIndx)
 {
-	Food* target;
+
+	Food* target = NULL;
+	int index = 0;
 	for(Food * f : food) {
 		if (foodIndx == f->mesh_index)
 			target = f;
+		else
+			index++;
 	}
-	if (scn->collision_detection(-1, foodIndx)) {
-		scn->iking = false;
+
+	if (target != NULL && scn->collision_detection(-1, foodIndx)) {
+		scn->iking = false;	
+		target->BeConsumed();
+		scn->erase_mesh(foodIndx);
+		food.erase(food.begin() + index);
+		delete target;
 	}
 
 

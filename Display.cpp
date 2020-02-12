@@ -122,10 +122,11 @@ bool Display::launch_rendering(bool loop)
 		double tic = igl::get_seconds();
 		renderer->draw(window);
 		glfwSwapBuffers(window);
-		if (renderer->GetScene()->iking && renderer->GetScene()->selected_data_index > renderer->GetScene()->iLastLink)
+		if (renderer->GetScene()->iking && renderer->GetScene()->selected_data_index > renderer->GetScene()->iLastLink) {
 			renderer->GetScene()->ik(renderer->GetScene()->selected_data_index);
+			fm->CollisionDetection(renderer->GetScene()->selected_data_index);
+		}
 		fm->MoveAll(igl::get_seconds() / 10000000000);
-		fm->CollisionDetection(renderer->GetScene()->selected_data_index);
 		/*if (renderer->GetScene()->speed != 0 && renderer->GetScene()->collision_detection(0, 1))
 			renderer->GetScene()->speed = 0;
 		renderer->GetScene()->move();*/

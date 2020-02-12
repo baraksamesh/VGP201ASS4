@@ -14,8 +14,7 @@ void igl::opengl::glfw::Food::Move(double delta_time)
 	scn->data(mesh_index).MyTranslate(dir * speed * delta_time);
 }
 
-int igl::opengl::glfw::Food::BeConsumed()
+void igl::opengl::glfw::Food::BeConsumed()
 {
-	
-	return 0;
+	scn->score += price;
 }

@@ -60,7 +60,6 @@ namespace igl
 
 			IGL_INLINE void Viewer::init()
 			{
-				lastTimeStamp = 0;
 
 			}
 
@@ -348,6 +347,9 @@ namespace igl
 					// Cannot remove last mesh
 					return false;
 				}
+
+				delete data_list[index].tree;
+
 				data_list[index].meshgl.free();
 				data_list.erase(data_list.begin() + index);
 				if (selected_data_index >= index && selected_data_index > 0)
@@ -377,10 +379,10 @@ namespace igl
 
 			void Viewer::loadIk(int links)
 			{
+				score = 0;
 				parents.resize(links + 1);
 				iFirstLink = 0;
 				iLastLink = links - 1;
-				iSphere = links;
 				std::ifstream file("configuration.txt");
 				std::string line;
 				bool is_exe = false;
@@ -400,16 +402,6 @@ namespace igl
 				MyTranslate(Eigen::Vector3f(0, -2, -9));
 				data(0).MyTranslate(Eigen::Vector3f(0, -link_size, 0));
 
-				if (!std::getline(file, line)) {
-					line = "C:/VGP201/EngineForAnimationCourse/tutorial/data/sphere.obj";
-				}
-				std::getline(file, line);
-				load_mesh_from_file(line);
-				data().MyTranslate(Eigen::Vector3f(5, 0, 0));
-				Eigen::MatrixXd color(1, 3);
-				color << 1, 0, 0;
-				data().set_colors(color);
-				parents[links] = links;
 			}
 
 			void Viewer::make_axis() {
@@ -485,7 +477,10 @@ namespace igl
 				return mat;
 			}
 			void Viewer::ik(int iTarget) {
-				//iking = false;
+				if (iTarget == -1) {
+					iking = false;
+					return;
+				}
 				Eigen::Vector3f d = data(iTarget).MakeTrans().block(0, 1, 3, 3).col(2);
 				Eigen::Vector3f arm_base = data(iFirstLink).MakeTrans().block(0, 1, 3, 3).col(2);
 				float link_size = 2 * data(iFirstLink).V.colwise().maxCoeff()[1];
@@ -605,19 +600,19 @@ namespace igl
 				data(0).MyTranslate(dir * speed * get_seconds() / 10000000000);
 			}
 
-			void Viewer::make_tree(Eigen::MatrixXd V, Eigen::MatrixXi F, int idx) {
-
-				igl::AABB<Eigen::MatrixXd, 3> tree;
-				tree.init(V, F);
-				trees[idx] = tree;
-				add_box(tree, idx, Eigen::RowVector3d(0, 1, 0));
-			}
-
-			void Viewer::initBoxes() {
-				for (int i = 0; i < data_list.size(); i++) {
-					add_box(trees[i], i, Eigen::RowVector3d(0, 1, 0), true);
-				}
-			}
+			//void Viewer::make_tree(Eigen::MatrixXd V, Eigen::MatrixXi F, int idx) {
+			//
+			//	igl::AABB<Eigen::MatrixXd, 3> tree;
+			//	tree.init(V, F);
+			//	trees[idx] = tree;
+			//	add_box(tree, idx, Eigen::RowVector3d(0, 1, 0));
+			//}
+			//
+			//void Viewer::initBoxes() {
+			//	for (int i = 0; i < data_list.size(); i++) {
+			//		add_box(trees[i], i, Eigen::RowVector3d(0, 1, 0), true);
+			//	}
+			//}
 
 			void Viewer::add_box(igl::AABB<Eigen::MatrixXd, 3>& tree, int idx, Eigen::RowVector3d color, bool deleteOld) {
 
@@ -682,22 +677,9 @@ namespace igl
 				float b1 = box2->sizes()[1] / 2;
 				float b2 = box2->sizes()[2] / 2;
 
-				//Eigen::RowVector3d A0 = A->col(0);
-				//Eigen::RowVector3d A1 = A->col(1);
-				//Eigen::RowVector3d A2 = A->col(2);
-
-				//Eigen::Vector3d B0 = B->col(0);
-				//Eigen::Vector3d B1 = B->col(1);
-				//Eigen::Vector3d B2 = B->col(2);
-
-				//Eigen::Vector4d c1 = Eigen::Vector4d(box1.center()[0], box1.center()[1], box1.center()[2], 1);
-				//Eigen::Vector4d c2 = Eigen::Vector4d(box2.center()[0], box2.center()[1], box2.center()[2], 1);
-
 				Eigen::Vector3d D = (data(idx2).MakeTrans().cast<double>() * Eigen::Vector4d(box2->center()[0], box2->center()[1], box2->center()[2], 1)
-					- data(idx1).MakeTrans().cast<double>() * Eigen::Vector4d(box1->center()[0], box1->center()[1], box1->center()[2], 1)).head(3);
-				//Eigen::Vector3d D = D4.head(3);
-
-
+					- ( MakeParentTrans(idx1)*data(idx1).MakeTrans() ).cast<double>() * Eigen::Vector4d(box1->center()[0], box1->center()[1], box1->center()[2], 1)).head(3);
+				
 				//A0
 				double R0 = a0;
 				double R1 = b0 * abs(C->row(0)[0]) + b1 * abs(C->row(0)[1]) + b2 * abs(C->row(0)[2]);
@@ -794,12 +776,12 @@ namespace igl
 
 			bool Viewer::collision_detection(int idx1, int iFood) {
 
-				Eigen::Matrix3d A = data(iLastLink).GetRotation().cast<double>();
+				Eigen::Matrix3d A = ( MakeParentTrans(iLastLink).block(0,0,3,3)*data(iLastLink).GetRotation() ).cast<double>();
 				Eigen::Matrix3d B = data(iFood).GetRotation().cast<double>();
 				Eigen::Matrix3d C = A.transpose() * B;
 
 
-				return collision_detection(&trees[iLastLink], data(iFood).tree, iLastLink, iFood, &A, &B, &C);
+				return collision_detection(data(iLastLink).tree, data(iFood).tree, iLastLink, iFood, &A, &B, &C);
 			}
 
 			bool Viewer::collision_detection(igl::AABB<Eigen::MatrixXd, 3>* tree1, igl::AABB<Eigen::MatrixXd, 3>* tree2, int idx1, int idx2, Eigen::Matrix3d* A, Eigen::Matrix3d* B, Eigen::Matrix3d* C) {
@@ -807,8 +789,8 @@ namespace igl
 				bool touching = false;
 
 				if (tree1->is_leaf() && tree2->is_leaf()) {
-					add_box(*tree1, 0, Eigen::RowVector3d(1, 1, 1));
-					add_box(*tree2, 1, Eigen::RowVector3d(1, 1, 1));
+					//add_box(*tree1, 0, Eigen::RowVector3d(1, 1, 1));
+					//add_box(*tree2, 1, Eigen::RowVector3d(1, 1, 1));
 					return true;
 				}
 
@@ -867,11 +849,6 @@ namespace igl
 			/// PROJECT ////////////////////////////////////////////////////////////////////////////////////////////////
 			///////////////////////////////////////////////////////////////////////////////////////////////////////
 
-
-			void Viewer::AddFood() {
-				load_mesh_from_file("C: / VGP201 / EngineForAnimationCourse / tutorial / data / xcylinder.obj");
-				//Food*
-			}
 
 		} // end namespace
 	} // end namespace

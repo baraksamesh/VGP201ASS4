@@ -17,10 +17,10 @@ static void glfw_mouse_press(GLFWwindow* window, int button, int action, int mod
 		bool found = false;
 		int i = 0, foundIndx = 0, savedIndx = scn->selected_data_index; // selected data index is the object curently selected in the scene
 
-		Eigen::MatrixXd color(1, 3);
-		color << 1, 1, 0;
-		if (scn->selected_data_index != -1)
-			scn->data().set_colors(color);
+		//Eigen::MatrixXd color(1, 3);
+		//color << 1, 1, 0;
+		//if (scn->selected_data_index != -1)
+		//	scn->data().set_colors(color);
 
 		for (; i < scn->data_list.size();i++) // untill end of objects or found
 		{
@@ -35,13 +35,23 @@ static void glfw_mouse_press(GLFWwindow* window, int button, int action, int mod
 
 		if (!found)
 		{
-			std::cout << "not found " << std::endl;
+			//std::cout << "not found " << std::endl;
 			scn->selected_data_index = -1; // get -1 if scene is selected
+			scn->iTarget = -1;
+			scn->iking = false;
 		}
 		else {
 			scn->selected_data_index = foundIndx;
-			color << 1, 0, 0;
-			scn->data().set_colors(color);
+			if (foundIndx > scn->iLastLink) {
+				scn->iTarget = scn->data().id;
+				scn->iking = true;
+			}
+			else {
+				scn->iTarget = -1;
+				scn->iking = false;
+			}
+			//color << 1, 0, 0;
+			//scn->data().set_colors(color);
 		}
 		rndr->UpdatePosition(x2, y2);
 
@@ -258,6 +268,18 @@ static void glfw_key_callback(GLFWwindow* window, int key, int scancode, int act
 			/*int sphereidx = scn->iSphere;
 			Eigen::Vector3f dest = scn->data(sphereidx).MakeTrans().col(3).head(3);
 			std::cout << "destination: (" << dest.transpose() << ")" << std::endl;*/
+			break;
+		}
+		case 'R':
+		case 'r':
+		{
+			scn->decision = 1;
+			break;
+		}
+		case 'C':
+		case 'c':
+		{
+			scn->decision = 2;
 			break;
 		}
 		default: break;//do nothing

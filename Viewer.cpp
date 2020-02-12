@@ -120,14 +120,14 @@ namespace igl
 			{
 			}
 
-			IGL_INLINE bool Viewer::load_mesh_from_file(
+			IGL_INLINE int Viewer::load_mesh_from_file(
 				const std::string& mesh_file_name_string)
 			{
-
+				int idx = -1;
 				// Create new data slot and set to selected
 				if (!(data().F.rows() == 0 && data().V.rows() == 0))
 				{
-					append_mesh();
+					idx = append_mesh();
 				}
 				data().clear();
 
@@ -136,7 +136,7 @@ namespace igl
 				{
 					std::cerr << "Error: No file extension found in " <<
 						mesh_file_name_string << std::endl;
-					return false;
+					return -1;
 				}
 
 				std::string extension = mesh_file_name_string.substr(last_dot + 1);
@@ -146,7 +146,7 @@ namespace igl
 					Eigen::MatrixXd V;
 					Eigen::MatrixXi F;
 					if (!igl::readOFF(mesh_file_name_string, V, F))
-						return false;
+						return -1;
 					data().set_mesh(V, F);
 				}
 				else if (extension == "obj" || extension == "OBJ")
@@ -164,7 +164,7 @@ namespace igl
 							mesh_file_name_string,
 							V, UV_V, corner_normals, F, UV_F, fNormIndices)))
 					{
-						return false;
+						return -1;
 					}
 
 					data().set_mesh(V, F);
@@ -175,7 +175,7 @@ namespace igl
 				{
 					// unrecognized file type
 					printf("Error: %s is not a recognized file type.\n", extension.c_str());
-					return false;
+					return -1;
 				}
 
 				data().compute_normals();
@@ -197,7 +197,43 @@ namespace igl
 				data().tree = new igl::AABB<Eigen::MatrixXd, 3>();
 				data().tree->init(data().V, data().F);
 
-				return true;
+				return data().id;
+			}
+
+			IGL_INLINE int Viewer::load_mesh_NOT_from_file(Eigen::MatrixXd V, Eigen::MatrixXi F)
+			{
+				int idx = -1;
+				// Create new data slot and set to selected
+				if (!(data().F.rows() == 0 && data().V.rows() == 0))
+				{
+					idx = append_mesh();
+				}
+				data().clear();
+
+				data().set_mesh(V, F);
+
+				
+
+				data().compute_normals();
+				data().uniform_colors(Eigen::Vector3d(51.0 / 255.0, 43.0 / 255.0, 33.3 / 255.0),
+					Eigen::Vector3d(255.0 / 255.0, 228.0 / 255.0, 58.0 / 255.0),
+					Eigen::Vector3d(255.0 / 255.0, 235.0 / 255.0, 80.0 / 255.0));
+
+				// Alec: why?
+				if (data().V_uv.rows() == 0)
+				{
+					data().grid_texture();
+				}
+
+
+				//for (unsigned int i = 0; i<plugins.size(); ++i)
+				//  if (plugins[i]->post_load())
+				//    return true;
+
+				data().tree = new igl::AABB<Eigen::MatrixXd, 3>();
+				data().tree->init(data().V, data().F);
+
+				return idx;
 			}
 
 			IGL_INLINE bool Viewer::save_mesh_to_file(
@@ -303,6 +339,8 @@ namespace igl
 					index = selected_data_index;
 				else
 					index = mesh_index(mesh_id);
+				if (index == -1)
+					index = 0;
 
 				assert((index >= 0 && index < data_list.size()) &&
 					"selected_data_index or mesh_id should be in bounds");
@@ -379,7 +417,9 @@ namespace igl
 
 			void Viewer::loadIk(int links)
 			{
+				decision = 0;
 				score = 0;
+				iTarget = -1;
 				parents.resize(links + 1);
 				iFirstLink = 0;
 				iLastLink = links - 1;
@@ -395,7 +435,7 @@ namespace igl
 					data().SetCenterOfRotation(Eigen::Vector3f(data().V.colwise().mean()[0], data().V.colwise().minCoeff()[1], data().V.colwise().mean()[2]));
 					y_top = data().V.colwise().maxCoeff()[1];
 					data().MyTranslate(Eigen::Vector3f(0, 2 * y_top, 0));
-					make_axis();
+					//make_axis();
 					parents[i] = i - 1;
 				}
 				float link_size = y_top * 2;
@@ -476,20 +516,22 @@ namespace igl
 
 				return mat;
 			}
-			void Viewer::ik(int iTarget) {
-				if (iTarget == -1) {
-					iking = false;
-					return;
-				}
-				Eigen::Vector3f d = data(iTarget).MakeTrans().block(0, 1, 3, 3).col(2);
+
+			void Viewer::ik() {
+				ik(data(iTarget).MakeTrans().block(0, 1, 3, 3).col(2));
+			}
+
+			void Viewer::ik(Eigen::Vector3f dest) {
+				Eigen::Vector3f d = dest;//data(iTarget).MakeTrans().block(0, 1, 3, 3).col(2);
 				Eigen::Vector3f arm_base = data(iFirstLink).MakeTrans().block(0, 1, 3, 3).col(2);
 				float link_size = 2 * data(iFirstLink).V.colwise().maxCoeff()[1];
 				float num_of_links = iLastLink + 1;
-				if ((d - arm_base).norm() > link_size* num_of_links) {
-					iking = false;
-					std::cout << "cannot reach" << std::endl;
-					return;
-				}
+				//if ((d - arm_base).norm() > link_size* num_of_links) {
+				//	iking = false;
+				//	//std::cout << "cannot reach" << std::endl;
+				//	fin_rotate();
+				//	return;
+				//}
 				int i = iLastLink;
 				while (i != -1 || i > iLastLink)
 				{
@@ -520,7 +562,7 @@ namespace igl
 						dot = 1;
 					if (dot < -1)
 						dot = -1;
-					float angle = distance < 1 ? acosf(dot) : acosf(dot) / 10;
+					float angle = distance < 1 ? acosf(dot) : acosf(dot) / 5;
 					//--------------bonus------------------------- 
 					int parent_i = getParentIndex(i);
 					if (parent_i != -1) {
@@ -595,11 +637,7 @@ namespace igl
 			/// COLLISION ////////////////////////////////////////////////////////////////////////////////////////////////
 			///////////////////////////////////////////////////////////////////////////////////////////////////////
 
-			void Viewer::move() {
-				//std::cout << get_seconds()/10000000000 << std::endl;
-				data(0).MyTranslate(dir * speed * get_seconds() / 10000000000);
-			}
-
+			
 			//void Viewer::make_tree(Eigen::MatrixXd V, Eigen::MatrixXi F, int idx) {
 			//
 			//	igl::AABB<Eigen::MatrixXd, 3> tree;
@@ -848,6 +886,18 @@ namespace igl
 			///////////////////////////////////////////////////////////////////////////////////////////////////////
 			/// PROJECT ////////////////////////////////////////////////////////////////////////////////////////////////
 			///////////////////////////////////////////////////////////////////////////////////////////////////////
+
+
+			void Viewer::ResetSnake() {
+				float y_top = 0;
+				for (int i = 0; i <= iLastLink; i++) {
+					y_top = data(i).V.colwise().maxCoeff()[1];
+					data(i).Reset();
+					data(i).SetCenterOfRotation(Eigen::Vector3f(data(i).V.colwise().mean()[0], data(i).V.colwise().minCoeff()[1], data(i).V.colwise().mean()[2]));
+					data(i).MyTranslate(Eigen::Vector3f(0, 2 * y_top, 0));
+				}
+				data(0).MyTranslate(Eigen::Vector3f(0, -2*y_top, 0));
+			}
 
 
 		} // end namespace

@@ -11,6 +11,7 @@ igl::opengl::glfw::Food::Food(float speed, Eigen::Vector3f dir, int price, int m
 
 void igl::opengl::glfw::Food::Move(double delta_time)
 {
+	int id = scn->data(mesh_index).id;
 	scn->data(mesh_index).MyTranslate(dir * speed * delta_time);
 }
 

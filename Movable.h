@@ -18,6 +18,7 @@ public:
 	Eigen::Vector3f GetCenterOfRotation();
 	Eigen::Matrix4f MakeParentTrans(Movable* parent);
 	Eigen::Matrix3f GetRotation();
+	void Reset();
 private:
 	Eigen::Transform<float, 3, Eigen::Affine> Tin;
 	Eigen::Transform<float, 3, Eigen::Affine> Tout;

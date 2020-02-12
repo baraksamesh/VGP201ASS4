@@ -65,3 +65,10 @@ Eigen::Matrix3f Movable::GetRotation() {
 	return Tout.rotation().matrix();
 
 }
+
+void Movable::Reset() {
+
+	Tin = Eigen::Transform<float, 3, Eigen::Affine>::Identity();
+	Tout = Eigen::Transform<float, 3, Eigen::Affine>::Identity();
+
+}

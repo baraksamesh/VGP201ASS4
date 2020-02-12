@@ -115,49 +115,75 @@ bool Display::launch_rendering(bool loop)
 	glfwGetWindowSize(window, &windowWidth, &windowHeight);
 	renderer->post_resize(window, windowWidth, windowHeight);
 
-
+	bool printed = false;
 	while (!glfwWindowShouldClose(window))
 	{
-
-		double tic = igl::get_seconds();
-		renderer->draw(window);
-		glfwSwapBuffers(window);
-		if (renderer->GetScene()->iking && renderer->GetScene()->selected_data_index > renderer->GetScene()->iLastLink) {
-			renderer->GetScene()->ik(renderer->GetScene()->selected_data_index);
-			fm->CollisionDetection(renderer->GetScene()->selected_data_index);
-		}
-		fm->MoveAll(igl::get_seconds() / 10000000000);
-		/*if (renderer->GetScene()->speed != 0 && renderer->GetScene()->collision_detection(0, 1))
-			renderer->GetScene()->speed = 0;
-		renderer->GetScene()->move();*/
-		if (renderer->core().is_animating || frame_counter++ < num_extra_frames)
-		{//motion
-
-			glfwPollEvents();
-			// In microseconds
-			double duration = 1000000. * (igl::get_seconds() - tic);
-			const double min_duration = 1000000. / renderer->core().animation_max_fps;
-			if (duration < min_duration)
-			{
-				std::this_thread::sleep_for(std::chrono::microseconds((int)(min_duration - duration)));
+		if (renderer->GetScene()->score == 5000000000000) {
+			renderer->core().background_color.setConstant(0);
+			if (!printed) {
+				std::cout << "LEVEL COMPLETE!! Press 'R' to restart, press 'C' to continue" << std::endl;
+				printed = true;
+			}
+			if (renderer->GetScene()->decision != 0) {
+				renderer->GetScene()->score = 0;
+				fm->ClearFood();
+				renderer->GetScene()->ResetSnake();
+				renderer->GetScene()->decision = 0;
+				renderer->core().background_color << 0.3f, 0.3f, 0.5f, 1.0f;
+				printed = false;
+			}
+			if (renderer->GetScene()->decision == 1) {
+				fm->ResetLevel();
+			}
+			else if (renderer->GetScene()->decision == 2) {	
+				fm->ClearFood();
 			}
 		}
-		else
-		{
-			glfwPollEvents();
-			frame_counter = 0;
+		else {
+		
+			float deltaTime = igl::get_seconds() / 100000000000;
+			fm->MoveAll(deltaTime);
+			if (renderer->GetScene()->iking && renderer->GetScene()->selected_data_index > renderer->GetScene()->iLastLink) {
+				renderer->GetScene()->ik();
+				fm->CollisionDetection(renderer->GetScene()->selected_data_index);
+			}
+			fm->AddFood(deltaTime);
 		}
-		if (!loop)
-			return !glfwWindowShouldClose(window);
+			double tic = igl::get_seconds();
+			renderer->draw(window);
+			glfwSwapBuffers(window);
+			/*if (renderer->GetScene()->speed != 0 && renderer->GetScene()->collision_detection(0, 1))
+				renderer->GetScene()->speed = 0;
+			renderer->GetScene()->move();*/
+			if (renderer->core().is_animating || frame_counter++ < num_extra_frames)
+			{//motion
+
+				glfwPollEvents();
+				// In microseconds
+				double duration = 1000000. * (igl::get_seconds() - tic);
+				const double min_duration = 1000000. / renderer->core().animation_max_fps;
+				if (duration < min_duration)
+				{
+					std::this_thread::sleep_for(std::chrono::microseconds((int)(min_duration - duration)));
+				}
+			}
+			else
+			{
+				glfwPollEvents();
+				frame_counter = 0;
+			}
+			if (!loop)
+				return !glfwWindowShouldClose(window);
 
 #ifdef __APPLE__
-		static bool first_time_hack = true;
-		if (first_time_hack) {
-			glfwHideWindow(window);
-			glfwShowWindow(window);
-			first_time_hack = false;
-		}
+			static bool first_time_hack = true;
+			if (first_time_hack) {
+				glfwHideWindow(window);
+				glfwShowWindow(window);
+				first_time_hack = false;
+			}
 #endif
+		
 	}
 	return EXIT_SUCCESS;
 }

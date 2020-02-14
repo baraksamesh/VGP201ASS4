@@ -18,10 +18,12 @@ namespace igl
 				int price;
 				int radious;
 				Viewer* scn;
+				float ttl;
 
-				Food(float speed, Eigen::Vector3f dir, int price, int mesh_index, int radious, Viewer* scn);
-				void Move(double delta_time);
+				Food(float speed, Eigen::Vector3f dir, int price, int mesh_index, int radious, Viewer* scn, float ttl);
+				virtual void Move(double delta_time);
 				void BeConsumed();
+				float ReduceTTL(double deltaTime);
 
 
 			private:

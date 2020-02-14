@@ -118,7 +118,7 @@ bool Display::launch_rendering(bool loop)
 	bool printed = false;
 	while (!glfwWindowShouldClose(window))
 	{
-		if (renderer->GetScene()->score == 5000000000000) {
+		if (renderer->GetScene()->score == 100) {
 			renderer->core().background_color.setConstant(0);
 			if (!printed) {
 				std::cout << "LEVEL COMPLETE!! Press 'R' to restart, press 'C' to continue" << std::endl;
@@ -126,7 +126,7 @@ bool Display::launch_rendering(bool loop)
 			}
 			if (renderer->GetScene()->decision != 0) {
 				renderer->GetScene()->score = 0;
-				fm->ClearFood();
+				fm->ClearAllFood();
 				renderer->GetScene()->ResetSnake();
 				renderer->GetScene()->decision = 0;
 				renderer->core().background_color << 0.3f, 0.3f, 0.5f, 1.0f;
@@ -136,7 +136,7 @@ bool Display::launch_rendering(bool loop)
 				fm->ResetLevel();
 			}
 			else if (renderer->GetScene()->decision == 2) {	
-				fm->ClearFood();
+				fm->ClearAllFood();
 			}
 		}
 		else {
@@ -148,6 +148,7 @@ bool Display::launch_rendering(bool loop)
 				fm->CollisionDetection(renderer->GetScene()->selected_data_index);
 			}
 			fm->AddFood(deltaTime);
+			fm->ReduceAllTTL(deltaTime);
 		}
 			double tic = igl::get_seconds();
 			renderer->draw(window);

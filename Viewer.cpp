@@ -439,7 +439,8 @@ namespace igl
 					parents[i] = i - 1;
 				}
 				float link_size = y_top * 2;
-				MyTranslate(Eigen::Vector3f(0, -2, -9));
+				MyTranslate(Eigen::Vector3f(0, -7, -27));
+				MyRotate(Eigen::Vector3f(1, 0, 0), 0.379066);
 				data(0).MyTranslate(Eigen::Vector3f(0, -link_size, 0));
 
 			}

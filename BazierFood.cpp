@@ -22,11 +22,15 @@ void igl::opengl::glfw::BazierFood::Move(double delta_time)	//calculate accordin
 	t += delta_time * speed / 10;
 	if (t <= 1) {
 		calcT();
-		scn->data(mesh_index).SetTranslation(T * MG);
+		curr_pos = T * MG;
+		Eigen::Vector3f tangent = (curr_pos - last_pos).normalized();
+		scn->data(mesh_index).LookAt(tangent);
+		scn->data(mesh_index).SetTranslation(curr_pos);
 	}
 	else {
 		scn->data(mesh_index).MyTranslate(final_dir * speed * delta_time);
 	}
+	last_pos = curr_pos;
 }
 
 void igl::opengl::glfw::BazierFood::calcT() {

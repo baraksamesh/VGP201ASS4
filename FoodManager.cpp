@@ -56,9 +56,17 @@ void igl::opengl::glfw::FoodManager::AddFood(float deltaTime)
 		//food.push_back(new BouncyFood(10, dir.normalized(), 10, idx, 1, scn, ttl, elevation*10, gravity, ground));
 		
 		Eigen::Matrix<float, 4, 3> points;
-		points << -10, 0, -10,
-				-10, 5, 0,
-				3, -5, -10,
+		/*points << -10, 0, -10,
+				-5, 5, -10,
+				0, -5, -10,
+				5, 0, -10;*/
+		/*points << -10, 0, -10,
+				-10, 5, -5,
+				-10, -5, 0,
+				-10, 0, 5;*/
+		points << -5, 0, -10,
+				0, 5, -10,
+				-15, -5, 0,
 				0, 0, 0;
 		food.push_back(new BazierFood(10, dir.normalized(), 10, idx, 1, scn, ttl, points));
 		scn->data(idx).MyTranslate(spawner_positions[iSpawner]);

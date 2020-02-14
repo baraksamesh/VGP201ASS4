@@ -16,8 +16,10 @@ public:
 	void MyScale(Eigen::Vector3f amt);
 	void SetCenterOfRotation(Eigen::Vector3f amt);
 	Eigen::Vector3f GetCenterOfRotation();
-	Eigen::Matrix4f MakeParentTrans(Movable* parent);
 	Eigen::Matrix3f GetRotation();
+	Eigen::Vector3f GetTranslation();
+	void SetTranslation(Eigen::Vector3f position);
+	void LookAt(Eigen::Vector3f forward);
 	void Reset();
 private:
 	Eigen::Transform<float, 3, Eigen::Affine> Tin;

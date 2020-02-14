@@ -20,6 +20,8 @@ namespace igl
 				Eigen::Matrix <float, 4, 3> MG;
 				Eigen::RowVector4f T;
 				Eigen::Vector3f final_dir;
+				Eigen::Vector3f last_pos;
+				Eigen::Vector3f curr_pos;
 
 				void calcT();
 

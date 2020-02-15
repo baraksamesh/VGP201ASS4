@@ -136,6 +136,7 @@ namespace igl
 				IGL_INLINE int load_mesh_NOT_from_file(Eigen::MatrixXd V, Eigen::MatrixXi F);
 				
 				void Viewer::ResetSnake();
+				void StrechCubeY(int id, float factor);
 
 			public:
 				//////////////////////

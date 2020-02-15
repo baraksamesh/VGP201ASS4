@@ -15,6 +15,7 @@ namespace igl
 				BouncyFood(float speed, Eigen::Vector3f dir, int price, int mesh_index, int radious, Viewer* scn, float ttl,
 							float vertical_speed, float gravity, float ground);
 				void Move(double delta_time);
+				void strechY();
 
 			private:
 

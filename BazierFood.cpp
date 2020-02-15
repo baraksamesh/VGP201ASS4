@@ -19,7 +19,7 @@ igl::opengl::glfw::BazierFood::BazierFood(float speed, Eigen::Vector3f dir, int 
 
 void igl::opengl::glfw::BazierFood::Move(double delta_time)	//calculate according to Coefficients approach T(MG)
 {
-	t += delta_time * speed / 10;
+	t += delta_time * speed / 40;
 	if (t <= 1) {
 		calcT();
 		curr_pos = T * MG;

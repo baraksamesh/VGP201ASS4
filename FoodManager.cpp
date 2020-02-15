@@ -11,7 +11,7 @@ igl::opengl::glfw::FoodManager::FoodManager(Viewer* _scn)
 
 	min_velocity = 10;
 	max_velocity = 50;
-	spawn_rate = 10;
+	spawn_rate = 1;
 	ttl = 5;
 
 	gravity = 9.8;
@@ -48,12 +48,12 @@ void igl::opengl::glfw::FoodManager::AddFood(float deltaTime)
 		Eigen::Vector3f dir = rotateVector(-spawner_positions[iSpawner], angle);
 		int elevation = (rand() % 2) + 4;//(rand() % 5)+3;
 
-		//dir[1] = elevation;
+		dir[1] = elevation;
 
 		cool_down = spawn_rate;
 		int idx = scn->load_mesh_from_file("C:/VGP201/EngineForAnimationCourse/tutorial/data/cube.obj");
 		//food.push_back(new Food(10, dir.normalized(), 10, idx, 1, scn, ttl));
-		//food.push_back(new BouncyFood(10, dir.normalized(), 10, idx, 1, scn, ttl, elevation*10, gravity, ground));
+		food.push_back(new BouncyFood(10, dir.normalized(), 10, idx, 1, scn, ttl, elevation*10, gravity, ground));
 		
 		Eigen::Matrix<float, 4, 3> points;
 		/*points << -10, 0, -10,
@@ -68,7 +68,7 @@ void igl::opengl::glfw::FoodManager::AddFood(float deltaTime)
 				0, 5, -10,
 				-15, -5, 0,
 				0, 0, 0;
-		food.push_back(new BazierFood(10, dir.normalized(), 10, idx, 1, scn, ttl, points));
+		//food.push_back(new BazierFood(10, dir.normalized(), 10, idx, 1, scn, ttl, points));
 		scn->data(idx).MyTranslate(spawner_positions[iSpawner]);
 	}
 }

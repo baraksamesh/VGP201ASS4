@@ -900,6 +900,21 @@ namespace igl
 				data(0).MyTranslate(Eigen::Vector3f(0, -2*y_top, 0));
 			}
 
+			void Viewer::StrechCubeY(int id, float factor) {
+				float height_factor = 0.5 * factor;
+				float width_factor = factor < 1 ? 0.5 / (factor * 1.1) : 0.5 / (factor / 1.1);
+
+				for (int i = 0; i < 8; i++) {
+					data(id).V.row(i)[0] = data(id).V.row(i)[0] > 0 ? width_factor : -width_factor;
+					data(id).V.row(i)[1] = data(id).V.row(i)[1] > 0 ? height_factor : -height_factor;
+					data(id).V.row(i)[2] = data(id).V.row(i)[2] > 0 ? width_factor : -width_factor;
+				}
+
+
+				
+				data(id).set_vertices(data(id).V);
+			}
+
 
 		} // end namespace
 	} // end namespace

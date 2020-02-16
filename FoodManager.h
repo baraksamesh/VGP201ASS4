@@ -33,21 +33,32 @@ namespace igl
 				int level;
 				float gravity;
 				float ground;
-				Eigen::Vector3f rotateVector(Eigen::Vector3f dir, int angle);
+
+				float base_spawn_rate;
+				int base_chance_of_regular;
+				int base_chance_of_bouncy;
+				int base_chance_of_bazier;
+				float base_speed;
+
+				float cool_down;
+				float spawn_rate;
+				int chance_of_regular;
+				int chance_of_bouncy;
+				int chance_of_bazier;
+				float speed;
 
 
 				Viewer* scn;
-
 				Eigen::Vector3f spawner_positions[4];
-				int min_velocity;
-				int max_velocity;
-				float spawn_rate;
 				float ttl;
 
 				Eigen::MatrixXd V;
 				Eigen::MatrixXi F;
 
-				float cool_down;
+				void AddRegularFood(float deltaTime);
+				void AddBouncyFood(float deltaTime);
+				void AddBazierFood(float deltaTime);
+				Eigen::Vector3f rotateVector(Eigen::Vector3f dir, int angle);
 			};
 
 		}

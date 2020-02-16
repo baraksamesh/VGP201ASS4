@@ -22,9 +22,10 @@ namespace igl
 				Eigen::Vector3f final_dir;
 				Eigen::Vector3f last_pos;
 				Eigen::Vector3f curr_pos;
+				Eigen::Matrix <float, 4, 3> points;
 
 				void calcT();
-
+				void drawCurve();
 			};
 
 		}

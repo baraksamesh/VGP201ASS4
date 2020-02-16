@@ -15,11 +15,12 @@ igl::opengl::glfw::BazierFood::BazierFood(float speed, Eigen::Vector3f dir, int 
 
 	t = 0;
 	final_dir = (points.row(3) - points.row(2)).normalized();
+	drawCurve();
 }
 
 void igl::opengl::glfw::BazierFood::Move(double delta_time)	//calculate according to Coefficients approach T(MG)
 {
-	t += delta_time * speed / 40;
+	t += delta_time * speed / 20;
 	if (t <= 1) {
 		calcT();
 		curr_pos = T * MG;
@@ -38,4 +39,17 @@ void igl::opengl::glfw::BazierFood::calcT() {
 	T[1] = powf(t, 2);
 	T[2] = t;
 	//T[3] = 1;
+}
+
+void igl::opengl::glfw::BazierFood::drawCurve()
+{
+	//Eigen::RowVector3d color = Eigen::RowVector3d(0, 1, 0);
+	//
+	//scn->data(mesh_index).add_edges(points.row(0).cast<double>(), points.row(1).cast<double>(), color);
+	//scn->data(mesh_index).add_edges(points.row(1).cast<double>(), points.row(2).cast<double>(), color);
+	//scn->data(mesh_index).add_edges(points.row(2).cast<double>(), points.row(3).cast<double>(), color);
+	//
+	//scn->data(mesh_index).line_width = 2;
+	//scn->data(mesh_index).show_lines = false;
+	//scn->data(mesh_index).show_overlay_depth = false;
 }

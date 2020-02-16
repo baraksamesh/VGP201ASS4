@@ -78,16 +78,15 @@ void Movable::SetTranslation(Eigen::Vector3f position)
 
 void Movable::LookAt(Eigen::Vector3f forward)
 {
+	Eigen::Vector3f pos = (Tout * Tin).matrix().block(0, 3, 3, 1);
 	Tin = Eigen::Transform<float, 3, Eigen::Affine>::Identity();
 	Tout = Eigen::Transform<float, 3, Eigen::Affine>::Identity();
+	Tout.pretranslate(pos);
 
 	Eigen::Vector3f right = Eigen::Vector3f(0, 1, 0).cross(forward);
 	Eigen::Vector3f up = forward.cross(right);
 
 	Eigen::Matrix3f R;
-	/**R << right[0], right[1], right[2],
-		up[0], up[1], up[2],
-		forward[0], forward[1], forward[2];**/
 
 	R << right[0], up[0], forward[0],
 		right[1], up[1], forward[1],
